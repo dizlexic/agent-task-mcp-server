@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Cow head - main circle -->
+  <circle cx="256" cy="272" r="176" fill="#F5F0EB"/>
+  <circle cx="256" cy="272" r="176" stroke="#2D2D2D" stroke-width="12"/>
+
+  <!-- Ears -->
+  <ellipse cx="108" cy="168" rx="52" ry="36" transform="rotate(-25 108 168)" fill="#F5F0EB" stroke="#2D2D2D" stroke-width="12"/>
+  <ellipse cx="108" cy="168" rx="32" ry="20" transform="rotate(-25 108 168)" fill="#F4A7BB"/>
+  <ellipse cx="404" cy="168" rx="52" ry="36" transform="rotate(25 404 168)" fill="#F5F0EB" stroke="#2D2D2D" stroke-width="12"/>
+  <ellipse cx="404" cy="168" rx="32" ry="20" transform="rotate(25 404 168)" fill="#F4A7BB"/>
+
+  <!-- Spots -->
+  <ellipse cx="190" cy="200" rx="50" ry="40" transform="rotate(-15 190 200)" fill="#4A3728" opacity="0.85"/>
+  <ellipse cx="330" cy="220" rx="42" ry="52" transform="rotate(10 330 220)" fill="#4A3728" opacity="0.85"/>
+  <circle cx="230" cy="160" r="22" fill="#4A3728" opacity="0.7"/>
+
+  <!-- Muzzle -->
+  <ellipse cx="256" cy="340" rx="80" ry="56" fill="#F4D1B0" stroke="#2D2D2D" stroke-width="10"/>
+
+  <!-- Nostrils -->
+  <ellipse cx="230" cy="345" rx="14" ry="10" fill="#2D2D2D"/>
+  <ellipse cx="282" cy="345" rx="14" ry="10" fill="#2D2D2D"/>
+
+  <!-- Eyes -->
+  <circle cx="196" cy="268" r="22" fill="#2D2D2D"/>
+  <circle cx="316" cy="268" r="22" fill="#2D2D2D"/>
+  <circle cx="204" cy="260" r="8" fill="white"/>
+  <circle cx="324" cy="260" r="8" fill="white"/>
+
+  <!-- Horns (small, cute) -->
+  <path d="M168 132 C158 88, 138 72, 130 60" stroke="#F4D1B0" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <path d="M344 132 C354 88, 374 72, 382 60" stroke="#F4D1B0" stroke-width="16" stroke-linecap="round" fill="none"/>
+
+  <!-- Checkmark badge (bottom right) -->
+  <circle cx="400" cy="400" r="72" fill="#22C55E" stroke="white" stroke-width="10"/>
+  <path d="M366 400 L390 424 L434 376" stroke="white" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

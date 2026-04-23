@@ -1,0 +1,36 @@
+{
+  "name": "agent-task-mcp-server",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "serve": "node .output/server/index.mjs",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "db:seed": "tsx server/db/seed.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "@nuxtjs/mcp-toolkit": "^0.13.4",
+    "@tailwindcss/vite": "^4.2.3",
+    "drizzle-orm": "^0.45.2",
+    "mysql2": "^3.11.0",
+    "nanoid": "^5.1.9",
+    "nuxt": "^4.4.2",
+    "nuxt-auth-utils": "^0.5.29",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "tailwindcss": "^4.2.3",
+    "vue": "^3.5.32",
+    "vue-router": "^5.0.4",
+    "vuedraggable": "^4.1.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.18.1"
+  }
+}

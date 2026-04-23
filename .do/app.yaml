@@ -1,0 +1,35 @@
+name: agent-task-mcp-server
+region: nyc
+
+services:
+  - name: web
+    dockerfile_path: Dockerfile
+    github:
+      branch: main
+      deploy_on_push: true
+    http_port: 3000
+    autoscaling:
+      min_instance_count: 1
+      max_instance_count: 3
+      metrics:
+        cpu:
+          percent: 70
+    instance_size_slug: apps-s-1vcpu-1gb
+    routes:
+      - path: /
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        type: SECRET
+      - key: DB_HOST
+      - key: DB_PORT
+      - key: DB_USER
+      - key: DB_PASSWORD
+        type: SECRET
+      - key: DB_NAME
+      - key: DB_SSL
+        value: REQUIRED
+      - key: NUXT_SESSION_PASSWORD
+        type: SECRET
+

@@ -1,0 +1,62 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build
+    command: npx nuxt dev --host 0.0.0.0
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=3000
+      - DATABASE_URL=mysql://${DB_USER:-mootasks}:${DB_PASSWORD:-mootasks}@db:3306/${DB_NAME:-mootasks}
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_SSL=
+      - DB_USER=${DB_USER:-mootasks}
+      - DB_PASSWORD=${DB_PASSWORD:-mootasks}
+      - DB_NAME=${DB_NAME:-mootasks}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "${DB_LOCAL_PORT:-3307}:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_USER=${DB_USER:-mootasks}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-mootasks}
+      - MYSQL_DATABASE=${DB_NAME:-mootasks}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - db-data:/var/lib/mysql
+
+  adminer:
+    image: adminer
+    ports:
+      - "5050:8080"
+    depends_on:
+      - db
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+volumes:
+  db-data:

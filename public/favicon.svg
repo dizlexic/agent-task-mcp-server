@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Cow head -->
+  <circle cx="32" cy="34" r="22" fill="#F5F0EB" stroke="#2D2D2D" stroke-width="2"/>
+  <!-- Ears -->
+  <ellipse cx="13" cy="21" rx="7" ry="5" transform="rotate(-25 13 21)" fill="#F5F0EB" stroke="#2D2D2D" stroke-width="1.5"/>
+  <ellipse cx="13" cy="21" rx="4" ry="3" transform="rotate(-25 13 21)" fill="#F4A7BB"/>
+  <ellipse cx="51" cy="21" rx="7" ry="5" transform="rotate(25 51 21)" fill="#F5F0EB" stroke="#2D2D2D" stroke-width="1.5"/>
+  <ellipse cx="51" cy="21" rx="4" ry="3" transform="rotate(25 51 21)" fill="#F4A7BB"/>
+  <!-- Spots -->
+  <ellipse cx="24" cy="25" rx="7" ry="5" transform="rotate(-15 24 25)" fill="#4A3728" opacity="0.85"/>
+  <ellipse cx="41" cy="28" rx="5" ry="7" transform="rotate(10 41 28)" fill="#4A3728" opacity="0.85"/>
+  <!-- Muzzle -->
+  <ellipse cx="32" cy="42" rx="10" ry="7" fill="#F4D1B0" stroke="#2D2D2D" stroke-width="1.5"/>
+  <!-- Nostrils -->
+  <ellipse cx="29" cy="43" rx="2" ry="1.5" fill="#2D2D2D"/>
+  <ellipse cx="35" cy="43" rx="2" ry="1.5" fill="#2D2D2D"/>
+  <!-- Eyes -->
+  <circle cx="25" cy="33" r="3" fill="#2D2D2D"/>
+  <circle cx="39" cy="33" r="3" fill="#2D2D2D"/>
+  <circle cx="26" cy="32" r="1" fill="white"/>
+  <circle cx="40" cy="32" r="1" fill="white"/>
+  <!-- Horns -->
+  <path d="M21 17 C20 12, 18 10, 17 8" stroke="#F4D1B0" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M43 17 C44 12, 46 10, 47 8" stroke="#F4D1B0" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Checkmark badge -->
+  <circle cx="50" cy="50" r="11" fill="#22C55E" stroke="white" stroke-width="2"/>
+  <path d="M45 50 L48.5 53.5 L55.5 46.5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
