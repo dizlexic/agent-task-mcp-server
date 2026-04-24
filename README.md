@@ -29,6 +29,7 @@
 |---|---|---|
 | 👤 | **User Accounts** | Email/password registration and login with sealed cookie sessions |
 | 📋 | **Multiple Boards** | Create and manage multiple project boards with custom descriptions |
+| 💾 | **Import/Export** | Import and export boards as JSON |
 | 👥 | **Board Collaboration** | Invite users by email, manage member roles (Owner/Member) |
 | 🔄 | **5-Column Kanban** | Workflow stages: Backlog → To Do → In Progress → Review → Done |
 | 🔀 | **Dual View Modes** | Toggle between visual **Kanban Board** and condensed **Task List** |
@@ -42,28 +43,20 @@
 
 ---
 
+## 💾 Board Management
+
+- **Import Board**: Available on the **Dashboard** page.
+- **Export Board**: Available in the **Board Settings** panel.
+
+---
+
 ## 🚀 Quick Start
 
-### Prerequisites
+The fastest way to get started with Moo Tasks is using Docker.
 
-- **Node.js** 22+
-- **npm**
+### 🐳 Running with Docker (Recommended)
 
-### Install & Run
-
-```bash
-# Install dependencies
-npm install
-
-# Set session secret (required)
-export NUXT_SESSION_PASSWORD="your-secret-key-at-least-32-characters-long"
-
-# Start development server
-npm run dev
-
-### Docker Setup
-
-If you have Docker installed, you can start the entire stack (including the database, Adminer, and Mailpit) with:
+If you have Docker installed, you can start the entire stack (including the database, Adminer, and Mailpit) with one command:
 
 ```bash
 docker-compose up -d
@@ -71,14 +64,25 @@ docker-compose up -d
 
 The application will be available at `http://localhost:3000`.
 
-The app runs at `http://localhost:3000`:
+### 🛠️ Manual Development Setup
 
-1. **Register** an account at `/register`
-2. **Create** a board from the dashboard
-3. **Add tasks** and manage your kanban board
-4. **Connect** AI agents to the board's MCP endpoint
+If you prefer to run locally without Docker:
 
-> **Seed sample data** (optional): `npx tsx server/db/seed.ts`
+1.  **Prerequisites**: Ensure you have [Node.js](https://nodejs.org/) (v22+) and [npm](https://www.npmjs.com/) installed.
+2.  **Install dependencies**: `npm install`
+3.  **Environment Variables**: Create a `.env` file from `.env.example` and set `NUXT_SESSION_PASSWORD` (at least 32 characters long).
+4.  **Start development server**: `npm run dev`
+
+## 📖 Usage Guide
+
+Get up and running in just a few minutes:
+
+1.  **Launch**: Once the server is running, navigate to `http://localhost:3000`.
+2.  **Account**: **Register** your account at `/register` or login.
+3.  **Create Board**: Head to the **Dashboard** to create your first project board.
+4.  **Manage Tasks**: Add, move, and update tasks on your new board using the drag-and-drop Kanban view or the list view.
+5.  **Connect AI**: Go to **Board Settings** to view your MCP configuration and connect your favorite AI agent (e.g., Claude Code, Cursor, VS Code).
+6.  **Seed Data**: Need test data? Run `npx tsx server/db/seed.ts` to populate the database with sample tasks.
 
 ---
 
