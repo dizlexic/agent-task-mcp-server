@@ -8,6 +8,13 @@
       "when": 1777049412594,
       "tag": "0000_careless_captain_britain",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1777049412600,
+      "tag": "0001_add_mcp_enabled_functions",
+      "breakpoints": true
     }
   ]
 }
