@@ -59,12 +59,11 @@ export async function requireUserSession(event: any, opts: { statusCode?: number
  */
 function _useRawSession(event: any) {
   const runtimeConfig = useRuntimeConfig(event)
-  const sessionConfig = defu(runtimeConfig.session, {
+  return useSession(event, {
     name: 'nuxt-session',
-    password: process.env.NUXT_SESSION_PASSWORD || '',
+    password: runtimeConfig.session.password as string,
     cookie: {
       sameSite: 'lax'
     }
   })
-  return useSession(event, sessionConfig)
 }

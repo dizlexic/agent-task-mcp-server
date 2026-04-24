@@ -18,6 +18,7 @@ const mcpToken = ref<string | null>(null)
 const tokenLoading = ref(false)
 const showToken = ref(false)
 const tokenCopied = ref(false)
+const mcpFunctions = ref<string[]>([])
 
 async function togglePublicMcp() {
   if (!board.value || board.value.role !== 'owner') return
@@ -30,6 +31,23 @@ async function togglePublicMcp() {
     board.value.mcpPublic = updated.mcpPublic
   } catch (e: any) {
     alert(e.data?.message || 'Failed to update MCP privacy setting')
+  }
+}
+
+async function toggleMcpFunction(fn: string) {
+  if (!board.value || board.value.role !== 'owner') return
+  const currentFunctions = (board.value.mcpEnabledFunctions as Record<string, boolean>) || {}
+  const newValue = currentFunctions[fn] !== false
+  const newFunctions = { ...currentFunctions, [fn]: !newValue }
+
+  try {
+    const updated = await $fetch<Board & { role: string }>(`/api/boards/${boardId}`, {
+      method: 'PATCH',
+      body: { mcpEnabledFunctions: newFunctions }
+    })
+    board.value.mcpEnabledFunctions = updated.mcpEnabledFunctions
+  } catch (e: any) {
+    alert(e.data?.message || 'Failed to update MCP function setting')
   }
 }
 
@@ -97,6 +115,7 @@ async function loadBoard() {
 
 onMounted(async () => {
   await loadBoard()
+  mcpFunctions.value = await $fetch<string[]>('/api/mcp-functions')
   await fetchTasks()
 
   const taskId = route.query.taskId || route.query.taskid || route.query.task_id
@@ -188,7 +207,7 @@ onUnmounted(() => stopSocket())
           <div class="space-y-6">
             <!-- MCP Privacy Setting -->
             <div v-if="board.role === 'owner'" class="bg-gray-50 dark:bg-surface-raised/30 rounded-xl p-4 border border-gray-100 dark:border-surface-border/50">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between mb-4">
                 <div>
                   <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block mb-1">Public MCP Endpoint</label>
                   <p class="text-[10px] font-medium text-gray-500 dark:text-gray-500 leading-relaxed">Allow access to this board's MCP server without a bearer token.</p>
@@ -203,6 +222,26 @@ onUnmounted(() => stopSocket())
                     :class="board.mcpPublic ? 'translate-x-5' : 'translate-x-0'"
                   />
                 </button>
+              </div>
+
+              <!-- MCP Functions Settings -->
+              <div class="mt-4 pt-4 border-t border-gray-100 dark:border-surface-border">
+                <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block mb-3">Enabled MCP Functions</label>
+                <div class="space-y-2">
+                  <div v-for="fn in mcpFunctions" :key="fn" class="flex items-center justify-between">
+                    <span class="text-xs text-gray-600 dark:text-gray-400">{{ fn }}</span>
+                    <button
+                      @click="toggleMcpFunction(fn)"
+                      class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                      :class="((board.mcpEnabledFunctions as Record<string, boolean>) || {})[fn] !== false ? 'bg-neon-cyan' : 'bg-gray-200 dark:bg-surface-raised'"
+                    >
+                      <span
+                        class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out"
+                        :class="((board.mcpEnabledFunctions as Record<string, boolean>) || {})[fn] !== false ? 'translate-x-4' : 'translate-x-0'"
+                      />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 

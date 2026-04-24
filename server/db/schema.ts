@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, timestamp, boolean, mysqlEnum, primaryKey, int } from 'drizzle-orm/mysql-core'
+import { mysqlTable, varchar, text, timestamp, boolean, mysqlEnum, primaryKey, int, json } from 'drizzle-orm/mysql-core'
 
 export const users = mysqlTable('users', {
   id: varchar('id', { length: 191 }).primaryKey(),
@@ -16,6 +16,7 @@ export const boards = mysqlTable('boards', {
   ownerId: varchar('owner_id', { length: 191 }).notNull().references(() => users.id),
   mcpToken: text('mcp_token'),
   mcpPublic: boolean('mcp_public').notNull().default(false),
+  mcpEnabledFunctions: json('mcp_enabled_functions'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
 })

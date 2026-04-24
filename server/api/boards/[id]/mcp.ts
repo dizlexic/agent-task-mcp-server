@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
   try {
     // Create a fresh transport and server for each request (stateless mode).
     // The MCP SDK requires a new transport instance per request in stateless mode.
-    const mcpServer = createBoardMcpServer(boardId)
+    const mcpServer = await createBoardMcpServer(boardId)
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined, // stateless mode
     })
