@@ -37,6 +37,7 @@ export default defineEventHandler(async (event) => {
     description: body.description?.trim() || '',
     status,
     priority,
+    order: body.order ? parseInt(body.order, 10) : 0,
     assignee: body.assignee?.trim() || null,
     parentTaskId: body.parentTaskId?.trim() || null,
     createdAt: now,

@@ -8,8 +8,8 @@ const { tasksByStatus, moveTask } = useTasks(props.boardId)
 
 const emit = defineEmits<{ taskClick: [task: Task] }>()
 
-async function onTaskMoved(taskId: string, newStatus: string) {
-  await moveTask(taskId, newStatus as TaskStatus)
+async function onTaskMoved(taskId: string, newStatus: string, newIndex: number) {
+  await moveTask(taskId, newStatus as TaskStatus, newIndex)
 }
 </script>
 

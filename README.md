@@ -10,6 +10,10 @@
 </p>
 
 <p align="center">
+  <img src="MooTasksFlow.gif" alt="Moo Tasks Workflow" width="700" />
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Nuxt-4-00DC82?logo=nuxt.js&logoColor=white" alt="Nuxt 4" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS v4" />
   <img src="https://img.shields.io/badge/MySQL-Drizzle_ORM-4479A1?logo=mysql&logoColor=white" alt="MySQL" />
@@ -56,6 +60,16 @@ export NUXT_SESSION_PASSWORD="your-secret-key-at-least-32-characters-long"
 
 # Start development server
 npm run dev
+
+### Docker Setup
+
+If you have Docker installed, you can start the entire stack (including the database, Adminer, and Mailpit) with:
+
+```bash
+docker-compose up -d
+```
+
+The application will be available at `http://localhost:3000`.
 ```
 
 The app runs at `http://localhost:3000`:
@@ -89,6 +103,14 @@ Copy `.env.example` to `.env` and adjust as needed:
 ## 🤖 MCP Server
 
 Each board has its own MCP endpoint at `/api/boards/:boardId/mcp`. AI agents connect to a specific board to work on its tasks.
+
+### 📋 Working with Tasks via MCP
+
+The board acts as the primary task list for this application. To programmatically work on tasks:
+
+1. **Get the MCP Token**: In the Board Settings, generate an MCP token if the board is private.
+2. **Configure Your Agent**: Add the MCP server configuration for your specific board.
+3. **Use Tools**: Use the available tools (`list-tasks`, `accept-task`, `update-task-status`, etc.) to interact with the tasks.
 
 ### 🔐 Security & Privacy
 

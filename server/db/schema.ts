@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, timestamp, boolean, mysqlEnum, primaryKey } from 'drizzle-orm/mysql-core'
+import { mysqlTable, varchar, text, timestamp, boolean, mysqlEnum, primaryKey, int } from 'drizzle-orm/mysql-core'
 
 export const users = mysqlTable('users', {
   id: varchar('id', { length: 191 }).primaryKey(),
@@ -36,6 +36,7 @@ export const tasks = mysqlTable('tasks', {
   description: text('description'),
   status: mysqlEnum('status', ['backlog', 'todo', 'in_progress', 'review', 'done']).notNull().default('backlog'),
   priority: mysqlEnum('priority', ['low', 'medium', 'high', 'critical']).notNull().default('medium'),
+  order: int('order').notNull().default(0),
   assignee: varchar('assignee', { length: 255 }),
   parentTaskId: varchar('parent_task_id', { length: 191 }),
   createdAt: timestamp('created_at').notNull(),

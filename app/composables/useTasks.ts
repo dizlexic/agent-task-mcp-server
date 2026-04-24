@@ -19,7 +19,7 @@ export function useTasks(boardId: string) {
   }
 
   function tasksByStatus(status: TaskStatus): Task[] {
-    return tasks.value.filter(t => t.status === status)
+    return tasks.value.filter(t => t.status === status).sort((a, b) => a.order - b.order)
   }
 
   async function createTask(data: {
@@ -37,7 +37,7 @@ export function useTasks(boardId: string) {
     return task
   }
 
-  async function updateTask(id: string, data: Partial<Pick<Task, 'title' | 'description' | 'status' | 'priority' | 'assignee'>>) {
+  async function updateTask(id: string, data: Partial<Pick<Task, 'title' | 'description' | 'status' | 'priority' | 'assignee' | 'order'>>) {
     const updated = await $fetch<Task>(`/api/tasks/${id}`, { method: 'PATCH', body: data })
     const idx = tasks.value.findIndex(t => t.id === id)
     if (idx !== -1) tasks.value[idx] = updated
@@ -49,8 +49,8 @@ export function useTasks(boardId: string) {
     tasks.value = tasks.value.filter(t => t.id !== id)
   }
 
-  async function moveTask(id: string, status: TaskStatus) {
-    return updateTask(id, { status })
+  async function moveTask(id: string, status: TaskStatus, order: number) {
+    return updateTask(id, { status, order })
   }
 
   function startSocket() {

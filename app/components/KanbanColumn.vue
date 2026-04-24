@@ -10,7 +10,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  taskMoved: [taskId: string, newStatus: string]
+  taskMoved: [taskId: string, newStatus: string, newIndex: number]
   taskClick: [task: Task]
 }>()
 
@@ -26,7 +26,7 @@ function onEnd(evt: any) {
   if (evt.to !== evt.from || evt.newIndex !== evt.oldIndex) {
     const taskId = evt.item?.dataset?.id
     if (taskId) {
-      emit('taskMoved', taskId, props.status)
+      emit('taskMoved', taskId, props.status, evt.newIndex)
     }
   }
 }

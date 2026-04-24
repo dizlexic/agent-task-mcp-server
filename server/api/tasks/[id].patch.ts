@@ -63,6 +63,10 @@ export default defineEventHandler(async (event) => {
     updates.parentTaskId = body.parentTaskId ? String(body.parentTaskId).trim() : null
   }
 
+  if (body.order !== undefined) {
+    updates.order = parseInt(body.order, 10)
+  }
+
   await db.update(tasks).set(updates).where(eq(tasks.id, id))
 
   const finalResults = await db.select().from(tasks).where(eq(tasks.id, id))

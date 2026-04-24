@@ -31,7 +31,8 @@ async function onSubmit() {
     await refreshSession()
     await navigateTo('/dashboard')
   } catch (e: any) {
-    error.value = e.data?.message || e.statusMessage || 'Login failed'
+    console.error('Login error:', e)
+    error.value = e.data?.message || e.data?.statusMessage || e.statusMessage || e.message || 'Login failed'
   } finally {
     loading.value = false
   }
