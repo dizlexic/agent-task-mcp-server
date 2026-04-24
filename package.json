@@ -12,7 +12,8 @@
     "postinstall": "nuxt prepare",
     "db:seed": "tsx server/db/seed.ts",
     "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@nuxtjs/mcp-toolkit": "^0.13.4",
@@ -31,6 +32,6 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.18.1"
+    "drizzle-kit": "^0.30.0"
   }
 }

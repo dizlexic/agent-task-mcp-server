@@ -17,6 +17,8 @@ export default defineEventHandler(async (event) => {
     name: body.name.trim(),
     description: body.description?.trim() || '',
     ownerId: session.user.id,
+    mcpToken: null,
+    mcpEnabledFunctions: null,
     createdAt: now,
     updatedAt: now,
   }

@@ -18,10 +18,16 @@ ENV HOST=0.0.0.0
 ENV PORT=3000
 
 COPY --from=build /app/.output .output
+COPY --from=build /app/package.json .
+COPY --from=build /app/package-lock.json .
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/drizzle ./drizzle
+COPY --from=build /app/drizzle.config.ts .
 
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "fetch('http://localhost:3000/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"
 
-CMD ["node", ".output/server/index.mjs"]
+# npm run db:migrate && npm run serve
+CMD ["sh", "-c", "npm run db:migrate && npm run serve"]
