@@ -3,11 +3,33 @@ const { boards, invitations, sentInvitations, loading, fetchBoards, fetchInvitat
 const { user } = useUserSession()
 
 const showCreate = ref(false)
+const importInput = ref<HTMLInputElement | null>(null)
 const newName = ref('')
 const newDescription = ref('')
 const creating = ref(false)
 const createError = ref('')
 const createModalRef = ref<HTMLElement | null>(null)
+
+function triggerImport() {
+  importInput.value?.click()
+}
+
+async function importBoard(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    const content = e.target?.result as string
+    const data = JSON.parse(content)
+    try {
+        await $fetch('/api/boards/import', { method: 'POST', body: data })
+        await fetchBoards()
+    } catch (e: any) {
+        alert(e.data?.message || 'Failed to import board')
+    }
+  }
+  reader.readAsText(file)
+}
 
 function onCreateModalKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
@@ -122,12 +144,21 @@ async function onLeave(boardId: string) {
     <div class="space-y-8">
       <div class="flex items-center justify-between ml-1">
         <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">My Boards</h2>
-        <button
-          @click="showCreate = true"
-          class="px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest bg-neon-cyan text-cyan-950 dark:text-gray-900 rounded-xl hover:bg-neon-cyan/90 transition-all hover:shadow-lg hover:shadow-neon-cyan/20 active:scale-95"
-        >
-          + New Board
-        </button>
+        <div class="flex gap-2">
+            <button
+                @click="triggerImport"
+                class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest bg-gray-100 dark:bg-surface-raised text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-surface-hover transition-all active:scale-95"
+            >
+                Import
+            </button>
+            <input type="file" ref="importInput" class="hidden" accept=".json" @change="importBoard" />
+            <button
+              @click="showCreate = true"
+              class="px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest bg-neon-cyan text-cyan-950 dark:text-gray-900 rounded-xl hover:bg-neon-cyan/90 transition-all hover:shadow-lg hover:shadow-neon-cyan/20 active:scale-95"
+            >
+              + New Board
+            </button>
+        </div>
       </div>
 
       <div v-if="loading" class="flex justify-center py-20">

@@ -9,6 +9,7 @@ const board = ref<(Board & { role: string }) | null>(null)
 const { fetchTasks, tasksByStatus, moveTask, createTask, updateTask, deleteTask, startSocket, stopSocket, tasks } = useTasks(boardId)
 
 const showCreateForm = ref(false)
+const showDeleteModal = ref(false)
 const selectedTask = ref<Task | null>(null)
 const showSettings = ref(false)
 const viewMode = ref<'board' | 'list'>('board')
@@ -103,6 +104,16 @@ async function revokeToken() {
   }
 }
 
+async function exportBoard() {
+  const data = await $fetch(`/api/boards/${boardId}/export`)
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${board.value!.name}.json`
+  a.click()
+}
+
 async function loadBoard() {
   try {
     const data = await $fetch<Board & { role: string }>(`/api/boards/${boardId}`)
@@ -188,6 +199,14 @@ onUnmounted(() => stopSocket())
       </div>
     </div>
 
+    <!-- Delete Board Modal -->
+    <DeleteBoardModal
+      v-if="showDeleteModal"
+      :board-id="boardId"
+      :board-name="board.name"
+      @close="showDeleteModal = false"
+    />
+
     <!-- Settings Panel -->
     <transition
       enter-active-class="transition duration-200 ease-out"
@@ -245,6 +264,22 @@ onUnmounted(() => stopSocket())
               </div>
             </div>
 
+            <!-- Export Board -->
+            <div class="bg-gray-50 dark:bg-surface-raised/30 rounded-xl p-4 border border-gray-100 dark:border-surface-border/50">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-xs font-bold uppercase tracking-widest text-gray-900 dark:text-white mb-1">Export Board</h4>
+                  <p class="text-[10px] text-gray-500 dark:text-gray-400">Export this board and all its tasks as JSON.</p>
+                </div>
+                <button
+                  @click="exportBoard"
+                  class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-200 transition-all active:scale-95"
+                >
+                  Export
+                </button>
+              </div>
+            </div>
+
             <!-- MCP Bearer Token -->
             <div v-if="board.role === 'owner'" class="space-y-3">
               <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block ml-1">MCP Bearer Token</label>
@@ -290,6 +325,22 @@ onUnmounted(() => stopSocket())
             </div>
 
             <BoardMembers :board-id="boardId" :is-owner="board.role === 'owner'" />
+
+            <!-- Delete Board -->
+            <div v-if="board.role === 'owner'" class="bg-red-50/50 dark:bg-red-950/10 rounded-xl p-4 border border-red-100 dark:border-red-900/30">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-xs font-bold uppercase tracking-widest text-red-900 dark:text-red-400 mb-1">Delete Board</h4>
+                  <p class="text-[10px] text-red-600 dark:text-red-500/70">Permanently delete this board and all its tasks.</p>
+                </div>
+                <button
+                  @click="showDeleteModal = true"
+                  class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all active:scale-95"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="space-y-6">

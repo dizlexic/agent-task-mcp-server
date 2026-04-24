@@ -1,8 +1,22 @@
 import { readBody, getRouterParam } from 'h3'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, asc } from 'drizzle-orm'
 import { db } from '../../db'
 import { tasks, boardMembers } from '../../db/schema'
 import { emitTaskEvent } from '../../utils/socket'
+
+async function reindexTasks(boardId: string, status: string) {
+  const tasksInColumn = await db.select().from(tasks)
+    .where(and(eq(tasks.boardId, boardId), eq(tasks.status, status)))
+    .orderBy(asc(tasks.order))
+
+  for (let i = 0; i < tasksInColumn.length; i++) {
+    if (tasksInColumn[i].order !== i) {
+      await db.update(tasks).set({ order: i, updatedAt: new Date() }).where(eq(tasks.id, tasksInColumn[i].id))
+      const updated = { ...tasksInColumn[i], order: i, updatedAt: new Date() }
+      emitTaskEvent(boardId, 'task:updated', updated)
+    }
+  }
+}
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -71,6 +85,15 @@ export default defineEventHandler(async (event) => {
 
   const finalResults = await db.select().from(tasks).where(eq(tasks.id, id))
   const result = finalResults[0]
-  if (result) emitTaskEvent(result.boardId, 'task:updated', result)
+
+  if (result) {
+    if (existing.status !== result.status) {
+      await reindexTasks(result.boardId, existing.status)
+      await reindexTasks(result.boardId, result.status)
+    } else {
+      await reindexTasks(result.boardId, result.status)
+    }
+    emitTaskEvent(result.boardId, 'task:updated', result)
+  }
   return result
 })
