@@ -12,6 +12,16 @@ const showCreateForm = ref(false)
 const showDeleteModal = ref(false)
 const selectedTask = ref<Task | null>(null)
 const showSettings = ref(false)
+const showMcpConfig = ref(false)
+const allFunctionsEnabled = ref(true)
+
+watch(() => board.value, (newBoard) => {
+  if (newBoard) {
+    const enabledFunctions = (newBoard.mcpEnabledFunctions as Record<string, boolean>) || {}
+    allFunctionsEnabled.value = !Object.values(enabledFunctions).includes(false)
+  }
+}, { immediate: true })
+
 const viewMode = ref<'board' | 'list'>('board')
 
 const mcpConfigCopied = ref(false)
@@ -222,64 +232,9 @@ onUnmounted(() => stopSocket())
           <button @click="showSettings = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">&times;</button>
         </div>
 
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div class="space-y-6">
-            <!-- MCP Privacy Setting -->
-            <div v-if="board.role === 'owner'" class="bg-gray-50 dark:bg-surface-raised/30 rounded-xl p-4 border border-gray-100 dark:border-surface-border/50">
-              <div class="flex items-center justify-between mb-4">
-                <div>
-                  <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block mb-1">Public MCP Endpoint</label>
-                  <p class="text-[10px] font-medium text-gray-500 dark:text-gray-500 leading-relaxed">Allow access to this board's MCP server without a bearer token.</p>
-                </div>
-                <button
-                  @click="togglePublicMcp"
-                  class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-                  :class="board.mcpPublic ? 'bg-neon-cyan shadow-[0_0_10px_rgba(0,240,255,0.3)]' : 'bg-gray-200 dark:bg-surface-raised'"
-                >
-                  <span
-                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out"
-                    :class="board.mcpPublic ? 'translate-x-5' : 'translate-x-0'"
-                  />
-                </button>
-              </div>
-
-              <!-- MCP Functions Settings -->
-              <div class="mt-4 pt-4 border-t border-gray-100 dark:border-surface-border">
-                <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block mb-3">Enabled MCP Functions</label>
-                <div class="space-y-2">
-                  <div v-for="fn in mcpFunctions" :key="fn" class="flex items-center justify-between">
-                    <span class="text-xs text-gray-600 dark:text-gray-400">{{ fn }}</span>
-                    <button
-                      @click="toggleMcpFunction(fn)"
-                      class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-                      :class="((board.mcpEnabledFunctions as Record<string, boolean>) || {})[fn] !== false ? 'bg-neon-cyan' : 'bg-gray-200 dark:bg-surface-raised'"
-                    >
-                      <span
-                        class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out"
-                        :class="((board.mcpEnabledFunctions as Record<string, boolean>) || {})[fn] !== false ? 'translate-x-4' : 'translate-x-0'"
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Export Board -->
-            <div class="bg-gray-50 dark:bg-surface-raised/30 rounded-xl p-4 border border-gray-100 dark:border-surface-border/50">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h4 class="text-xs font-bold uppercase tracking-widest text-gray-900 dark:text-white mb-1">Export Board</h4>
-                  <p class="text-[10px] text-gray-500 dark:text-gray-400">Export this board and all its tasks as JSON.</p>
-                </div>
-                <button
-                  @click="exportBoard"
-                  class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-200 transition-all active:scale-95"
-                >
-                  Export
-                </button>
-              </div>
-            </div>
-
             <!-- MCP Bearer Token -->
             <div v-if="board.role === 'owner'" class="space-y-3">
               <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block ml-1">MCP Bearer Token</label>
@@ -324,23 +279,79 @@ onUnmounted(() => stopSocket())
               </div>
             </div>
 
-            <BoardMembers :board-id="boardId" :is-owner="board.role === 'owner'" />
-
-            <!-- Delete Board -->
-            <div v-if="board.role === 'owner'" class="bg-red-50/50 dark:bg-red-950/10 rounded-xl p-4 border border-red-100 dark:border-red-900/30">
-              <div class="flex items-center justify-between">
+            <!-- MCP Privacy Setting -->
+            <div v-if="board.role === 'owner'" class="bg-gray-50 dark:bg-surface-raised/30 rounded-xl p-4 border border-gray-100 dark:border-surface-border/50">
+              <div class="flex items-center justify-between mb-4">
                 <div>
-                  <h4 class="text-xs font-bold uppercase tracking-widest text-red-900 dark:text-red-400 mb-1">Delete Board</h4>
-                  <p class="text-[10px] text-red-600 dark:text-red-500/70">Permanently delete this board and all its tasks.</p>
+                  <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block mb-1">Public MCP Endpoint</label>
+                  <p class="text-[10px] font-medium text-gray-500 dark:text-gray-500 leading-relaxed">Allow access to this board's MCP server without a bearer token.</p>
                 </div>
                 <button
-                  @click="showDeleteModal = true"
-                  class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all active:scale-95"
+                  @click="togglePublicMcp"
+                  class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                  :class="board.mcpPublic ? 'bg-neon-cyan shadow-[0_0_10px_rgba(0,240,255,0.3)]' : 'bg-gray-200 dark:bg-surface-raised'"
                 >
-                  Delete
+                  <span
+                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out"
+                    :class="board.mcpPublic ? 'translate-x-5' : 'translate-x-0'"
+                  />
                 </button>
               </div>
+
+              <!-- MCP Functions Settings -->
+              <div class="mt-4 pt-4 border-t border-gray-100 dark:border-surface-border">
+                <div class="flex items-center justify-between mb-3">
+                  <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block">Enabled MCP Functions</label>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-gray-500 uppercase tracking-widest">All</span>
+                    <button
+                      @click="allFunctionsEnabled = !allFunctionsEnabled"
+                      class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                      :class="allFunctionsEnabled ? 'bg-neon-cyan' : 'bg-gray-200 dark:bg-surface-raised'"
+                    >
+                      <span
+                        class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out"
+                        :class="allFunctionsEnabled ? 'translate-x-4' : 'translate-x-0'"
+                      />
+                    </button>
+                  </div>
+                </div>
+                <div v-if="!allFunctionsEnabled" class="space-y-2">
+                  <div v-for="fn in mcpFunctions" :key="fn" class="flex items-center justify-between">
+                    <span class="text-xs text-gray-600 dark:text-gray-400">{{ fn }}</span>
+                    <button
+                      @click="toggleMcpFunction(fn)"
+                      class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                      :class="((board.mcpEnabledFunctions as Record<string, boolean>) || {})[fn] !== false ? 'bg-neon-cyan' : 'bg-gray-200 dark:bg-surface-raised'"
+                    >
+                      <span
+                        class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out"
+                        :class="((board.mcpEnabledFunctions as Record<string, boolean>) || {})[fn] !== false ? 'translate-x-4' : 'translate-x-0'"
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <!-- Export Board -->
+            <!-- <div class="bg-gray-50 dark:bg-surface-raised/30 rounded-xl p-4 border border-gray-100 dark:border-surface-border/50">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-xs font-bold uppercase tracking-widest text-gray-900 dark:text-white mb-1">Export Board</h4>
+                  <p class="text-[10px] text-gray-500 dark:text-gray-400">Export this board and all its tasks as JSON.</p>
+                </div>
+                <button
+                  @click="exportBoard"
+                  class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-200 transition-all active:scale-95"
+                >
+                  Export
+                </button>
+              </div>
+            </div> -->
+
+
+            <BoardMembers :board-id="boardId" :is-owner="board.role === 'owner'" />
           </div>
 
           <div class="space-y-6">
@@ -348,25 +359,51 @@ onUnmounted(() => stopSocket())
             <div class="space-y-3">
               <div class="flex items-center justify-between ml-1">
                 <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300">MCP Client Configuration</label>
-                <button
-                  @click="copyMcpConfig"
-                  class="text-[9px] font-black uppercase tracking-tighter px-2 py-1 rounded-md transition-all shadow-sm"
-                  :class="mcpConfigCopied
-                    ? 'bg-neon-green text-gray-900 shadow-neon-green/20'
-                    : 'bg-gray-100 dark:bg-surface-raised text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
-                >
-                  {{ mcpConfigCopied ? '✓ Copied' : '📋 Copy JSON' }}
-                </button>
+                <div class="flex gap-2">
+                  <button
+                    @click="showMcpConfig = !showMcpConfig"
+                    class="text-[9px] font-black uppercase tracking-tighter px-2 py-1 rounded-md transition-all shadow-sm bg-gray-100 dark:bg-surface-raised text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    {{ showMcpConfig ? 'Hide' : 'Show' }}
+                  </button>
+                  <button
+                    @click="copyMcpConfig"
+                    class="text-[9px] font-black uppercase tracking-tighter px-2 py-1 rounded-md transition-all shadow-sm"
+                    :class="mcpConfigCopied
+                      ? 'bg-neon-green text-gray-900 shadow-neon-green/20'
+                      : 'bg-gray-100 dark:bg-surface-raised text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
+                  >
+                    {{ mcpConfigCopied ? '✓ Copied' : '📋 Copy JSON' }}
+                  </button>
+                </div>
               </div>
-              <div class="relative group">
-                <pre class="bg-gray-900 dark:bg-surface-dark/80 text-neon-green text-[11px] rounded-xl p-5 overflow-x-auto select-all cursor-pointer border border-transparent dark:border-surface-border shadow-inner dark:shadow-black transition-all hover:border-neon-green/30" @click="copyMcpConfig"><code>{{ mcpConfig }}</code></pre>
+              <div v-if="showMcpConfig" class="relative group">
+                <pre class="bg-gray-900 dark:bg-surface-dark/80 text-neon-green text-[11px] rounded-xl p-5 overflow-x-auto border border-transparent dark:border-surface-border shadow-inner dark:shadow-black transition-all hover:border-neon-green/30"><code>{{ mcpConfig }}</code></pre>
                 <div class="absolute inset-0 bg-neon-green/5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity rounded-xl"></div>
               </div>
-              <p class="text-[10px] font-medium text-gray-400 dark:text-gray-500 leading-relaxed ml-1">Add this to your MCP client configuration (e.g. Claude Code, Cursor, VS Code).</p>
+              <p v-if="showMcpConfig" class="text-[10px] font-medium text-gray-400 dark:text-gray-500 leading-relaxed ml-1">Add this to your MCP client configuration (e.g. Claude Code, Cursor, VS Code).</p>
             </div>
 
             <BoardInstructions :board-id="boardId" :is-owner="board.role === 'owner'" />
           </div>
+        </div>
+
+        <!-- Settings Footer (Export/Delete) -->
+        <div class="mt-8 pt-8 border-t border-gray-200 dark:border-surface-border flex items-center justify-end gap-4">
+          <!-- Export Board -->
+          <button
+            @click="exportBoard"
+            class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-200 transition-all active:scale-95"
+          >
+            Export Board
+          </button>
+          <!-- Delete Board -->
+          <button
+            @click="showDeleteModal = true"
+            class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all active:scale-95"
+          >
+            Delete Board
+          </button>
         </div>
       </div>
     </transition>
