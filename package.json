@@ -33,6 +33,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/nodemailer": "^8.0.0",
     "drizzle-kit": "^0.30.0"
   }
 }

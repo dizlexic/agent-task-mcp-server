@@ -73,8 +73,9 @@ async function onSubmit() {
 
       <div class="mt-8 pt-8 border-t border-gray-100 dark:border-surface-border/50 text-center">
         <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
-          Don't have an account?
-          <NuxtLink to="/register" class="text-neon-cyan hover:text-neon-cyan/80 font-bold transition-colors ml-1">Register</NuxtLink>
+          <NuxtLink to="/register" class="text-neon-cyan hover:text-neon-cyan/80 font-bold transition-colors">Register</NuxtLink>
+          <span class="mx-2 text-gray-300 dark:text-surface-border">|</span>
+          <a href="/forgot-password" class="text-neon-cyan hover:text-neon-cyan/80 font-bold transition-colors">Forgot password?</a>
         </p>
       </div>
     </div>

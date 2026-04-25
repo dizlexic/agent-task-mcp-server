@@ -5,6 +5,7 @@ export const users = mysqlTable('users', {
   email: varchar('email', { length: 191 }).notNull().unique(),
   name: varchar('name', { length: 255 }).notNull(),
   passwordHash: text('password_hash').notNull(),
+  isVerified: boolean('is_verified').notNull().default(false),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
 })
@@ -72,6 +73,20 @@ export const invitations = mysqlTable('invitations', {
 }, (table) => [
   primaryKey({ columns: [table.boardId, table.email] }),
 ])
+
+export const emailVerificationTokens = mysqlTable('email_verification_tokens', {
+  id: varchar('id', { length: 191 }).primaryKey(),
+  userId: varchar('user_id', { length: 191 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  token: varchar('token', { length: 191 }).notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+})
+
+export const passwordResetTokens = mysqlTable('password_reset_tokens', {
+  id: varchar('id', { length: 191 }).primaryKey(),
+  userId: varchar('user_id', { length: 191 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  token: varchar('token', { length: 191 }).notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+})
 
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert

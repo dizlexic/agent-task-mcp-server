@@ -1,7 +1,8 @@
 export default defineNuxtRouteMiddleware((to) => {
   const { loggedIn } = useUserSession()
 
-  if (!loggedIn.value && to.path !== '/login' && to.path !== '/register') {
+  const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/verify-email-success']
+  if (!loggedIn.value && !publicRoutes.includes(to.path)) {
     return navigateTo('/login', { replace: true })
   }
 

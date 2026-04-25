@@ -3,6 +3,11 @@ import { eq } from 'drizzle-orm'
 import { db } from '../../db'
 import { users, invitations, boardMembers } from '../../db/schema'
 import { generateId } from '../../utils/id'
+import { hashPassword } from '../../utils/password'
+import { createEmailVerificationToken } from '../../utils/auth'
+import { getVerificationEmail } from '../../utils/email-templates'
+import { sendEmail } from '../../utils/mailer'
+import { replaceUserSession } from '../../utils/session'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -36,6 +41,12 @@ export default defineEventHandler(async (event) => {
   }
 
   await db.insert(users).values(user)
+
+  // Send verification email
+  const token = await createEmailVerificationToken(user.id)
+  const verificationUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/verify-email?token=${token}`
+  const emailTemplate = getVerificationEmail(verificationUrl)
+  await sendEmail(email, emailTemplate.subject, emailTemplate.text, emailTemplate.html)
 
   // Process pending invitations
   const pendingInvites = await db.select().from(invitations).where(eq(invitations.email, email))

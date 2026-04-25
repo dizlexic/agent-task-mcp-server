@@ -2,6 +2,8 @@ import { readBody } from 'h3'
 import { eq } from 'drizzle-orm'
 import { db } from '../../db'
 import { users } from '../../db/schema'
+import { comparePasswords } from '../../utils/password'
+import { replaceUserSession } from '../../utils/session'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -20,7 +22,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Invalid email or password' })
   }
 
-  const valid = await verifyPassword(user.passwordHash, body.password)
+  const valid = await comparePasswords(body.password, user.passwordHash)
   if (!valid) {
     throw createError({ statusCode: 401, statusMessage: 'Invalid email or password' })
   }
