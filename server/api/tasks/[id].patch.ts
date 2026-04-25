@@ -18,6 +18,30 @@ async function reindexTasks(boardId: string, status: string) {
   }
 }
 
+async function reorderTasks(boardId: string, status: string, taskId: string, newOrder: number) {
+  const tasksInColumn = await db.select().from(tasks)
+    .where(and(eq(tasks.boardId, boardId), eq(tasks.status, status)))
+    .orderBy(asc(tasks.order))
+
+  // Find the task, remove it from old list
+  const taskToMove = tasksInColumn.find(t => t.id === taskId)
+  const otherTasks = tasksInColumn.filter(t => t.id !== taskId)
+
+  if (!taskToMove) return;
+
+  // Insert at new position
+  otherTasks.splice(newOrder, 0, taskToMove)
+
+  // Update all
+  for (let i = 0; i < otherTasks.length; i++) {
+    if (otherTasks[i].order !== i) {
+      await db.update(tasks).set({ order: i, updatedAt: new Date() }).where(eq(tasks.id, otherTasks[i].id))
+      const updated = { ...otherTasks[i], order: i, updatedAt: new Date() }
+      emitTaskEvent(boardId, 'task:updated', updated)
+    }
+  }
+}
+
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
   const id = getRouterParam(event, 'id')
@@ -87,9 +111,12 @@ export default defineEventHandler(async (event) => {
   const result = finalResults[0]
 
   if (result) {
+    console.log('Task updated:', result.id, 'oldStatus:', existing.status, 'newStatus:', result.status, 'order:', result.order)
     if (existing.status !== result.status) {
       await reindexTasks(result.boardId, existing.status)
-      await reindexTasks(result.boardId, result.status)
+      await reorderTasks(result.boardId, result.status, result.id, result.order)
+    } else if (body.order !== undefined) {
+      await reorderTasks(result.boardId, result.status, result.id, result.order)
     } else {
       await reindexTasks(result.boardId, result.status)
     }

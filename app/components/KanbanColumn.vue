@@ -14,20 +14,19 @@ const emit = defineEmits<{
   taskClick: [task: Task]
 }>()
 
-const localTasks = computed({
-  get: () => props.tasks,
-  set: () => {},
+const localTasks = ref<Task[]>([...props.tasks])
+watch(() => props.tasks, (newTasks) => {
+  localTasks.value = [...newTasks]
 })
 
 const isDragOver = ref(false)
 
-function onEnd(evt: any) {
+function onChange(evt: any) {
   isDragOver.value = false
-  if (evt.to !== evt.from || evt.newIndex !== evt.oldIndex) {
-    const taskId = evt.item?.dataset?.id
-    if (taskId) {
-      emit('taskMoved', taskId, props.status, evt.newIndex)
-    }
+  if (evt.added) {
+    emit('taskMoved', evt.added.element.id, props.status, evt.added.newIndex)
+  } else if (evt.moved) {
+    emit('taskMoved', evt.moved.element.id, props.status, evt.moved.newIndex)
   }
 }
 
@@ -57,7 +56,7 @@ const col = computed(() => (COLUMN_COLORS as any)[props.status] || COLUMN_COLORS
       </span>
     </div>
     <draggable
-      :model-value="localTasks"
+      v-model="localTasks"
       group="tasks"
       item-key="id"
       class="flex-1 p-2 space-y-2 min-h-[120px] overflow-y-auto rounded-b-xl transition-colors"
@@ -65,7 +64,7 @@ const col = computed(() => (COLUMN_COLORS as any)[props.status] || COLUMN_COLORS
       drag-class="sortable-drag"
       chosen-class="sortable-chosen"
       :animation="200"
-      @end="onEnd"
+      @change="onChange"
       @dragenter="isDragOver = true"
       @dragleave="isDragOver = false"
     >
