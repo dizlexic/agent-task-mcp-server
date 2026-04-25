@@ -45,18 +45,18 @@ services:
     volumes:
       - db-data:/var/lib/mysql
 
-  adminer:
-    image: adminer
-    ports:
-      - "5050:8080"
-    depends_on:
-      - db
+#  adminer:
+#    image: adminer
+#    ports:
+#      - "5050:8080"
+#    depends_on:
+#      - db
 
-  mailpit:
-    image: axllent/mailpit
-    ports:
-      - "8025:8025"
-      - "1025:1025"
+#  mailpit:
+#    image: axllent/mailpit
+#    ports:
+#      - "8025:8025"
+#      - "1025:1025"
 
 volumes:
   db-data:

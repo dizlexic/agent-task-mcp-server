@@ -21,6 +21,7 @@
     "drizzle-orm": "^0.45.2",
     "mysql2": "^3.11.0",
     "nanoid": "^5.1.9",
+    "nodemailer": "^8.0.6",
     "nuxt": "^4.4.2",
     "nuxt-auth-utils": "^0.5.29",
     "socket.io": "^4.8.3",
