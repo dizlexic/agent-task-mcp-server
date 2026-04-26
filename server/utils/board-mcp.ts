@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, isNull, inArray } from 'drizzle-orm'
 import { db } from '../db'
 import { tasks, comments, instructions, boards } from '../db/schema'
 import { generateId } from './id'
@@ -52,11 +52,14 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
       'list-tasks',
       'List tasks on this board. WHEN TO USE: To discover available tasks, check board status, or find tasks by status/priority.',
       {
-        status: z.enum(['backlog', 'todo', 'in_progress', 'review', 'done']).optional().describe('Filter by task status'),
+        status: z.enum(['todo', 'in_progress']).optional().describe('Filter by task status'),
         priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Filter by task priority'),
       },
       async ({ status, priority }) => {
-        const conditions = [eq(tasks.boardId, boardId)]
+        const conditions = [
+          eq(tasks.boardId, boardId),
+          inArray(tasks.status, ['todo', 'in_progress'])
+        ]
         if (status) conditions.push(eq(tasks.status, status))
         if (priority) conditions.push(eq(tasks.priority, priority))
 

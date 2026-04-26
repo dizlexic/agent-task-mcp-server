@@ -18,7 +18,7 @@ Backlog → To Do → In Progress → Review → Done
 - **low**: Nice to have, can wait
 
 ## Workflow
-1. Use **list-tasks** to discover available tasks (filter by status "todo" or "backlog")
+1. Use **list-tasks** to discover available tasks (filter by status "todo" or "in_progress")
 2. Use **accept-task** with your agent name to claim a task (moves it to in_progress)
 3. Work on the task
 4. Use **submit-for-review** to move the task to review status
@@ -37,7 +37,7 @@ Backlog → To Do → In Progress → Review → Done
 
 export const DEFAULT_TASK_WORKFLOW = `You are an AI agent working with Moo Tasks. Follow this workflow:
 
-1. **Discover tasks**: Call the "list-tasks" tool to see available tasks. Filter by status "todo" or "backlog" to find work.
+1. **Discover tasks**: Call the "list-tasks" tool to see available tasks. Filter by status "todo" or "in_progress" to find work.
 
 2. **Read instructions**: Read the "agent-instructions" resource to understand the full workflow and rules.
 
