@@ -9,12 +9,12 @@
 
 ## 1. What is the Moo Tasks board?
 
-Moo Tasks is a kanban board that exposes each board as its own
+Moo Tasks is a kanban board (available at [mootasks.dev](https://mootasks.dev)) that exposes each board as its own
 [Model Context Protocol](https://modelcontextprotocol.io/specification/2025-11-25)
 (MCP) server. The endpoint is **scoped to a single board** — an agent connected
 to one board can never see or modify tasks on any other board.
 
-- **Endpoint URL:** `https://<your-moo-tasks-host>/api/boards/<boardId>/mcp`
+- **Endpoint URL:** `https://mootasks.dev/api/boards/<boardId>/mcp` (or your self-hosted host)
 - **Transport:** `streamable-http`
 - **Auth:** `Authorization: Bearer <token>` (per
   [MCP basic spec](https://modelcontextprotocol.io/specification/2025-11-25/basic))
@@ -34,7 +34,7 @@ into your MCP client's config:
   "mcpServers": {
     "moo-tasks": {
       "type": "streamable-http",
-      "url": "https://<your-moo-tasks-host>/api/boards/<boardId>/mcp",
+      "url": "https://mootasks.dev/api/boards/<boardId>/mcp",
       "headers": {
         "Authorization": "Bearer <your-bearer-token>"
       }

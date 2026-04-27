@@ -4,6 +4,7 @@ import type { Board } from '../../../server/db/schema'
 
 const route = useRoute()
 const boardId = route.params.id as string
+const currentBoardName = useState<string | null>('currentBoardName')
 
 const board = ref<(Board & { role: string }) | null>(null)
 const { fetchTasks, tasksByStatus, moveTask, createTask, updateTask, deleteTask, startSocket, stopSocket, tasks } = useTasks(boardId)
@@ -12,11 +13,13 @@ const showCreateForm = ref(false)
 const showDeleteModal = ref(false)
 const selectedTask = ref<Task | null>(null)
 const showSettings = ref(false)
+const showHelpModal = ref(false)
 const showMcpConfig = ref(false)
 const allFunctionsEnabled = ref(true)
 
 watch(() => board.value, (newBoard) => {
   if (newBoard) {
+    currentBoardName.value = newBoard.name
     const enabledFunctions = (newBoard.mcpEnabledFunctions as Record<string, boolean>) || {}
     allFunctionsEnabled.value = !Object.values(enabledFunctions).includes(false)
   }
@@ -222,6 +225,15 @@ onUnmounted(() => stopSocket())
       @close="showDeleteModal = false"
     />
 
+    <!-- MCP Help Modal -->
+    <McpHelpModal
+      v-if="showHelpModal"
+      :board-id="boardId"
+      :mcp-token="mcpToken"
+      :is-public="board.mcpPublic"
+      @close="showHelpModal = false"
+    />
+
     <!-- Settings Panel -->
     <transition
       enter-active-class="transition duration-200 ease-out"
@@ -233,7 +245,16 @@ onUnmounted(() => stopSocket())
     >
       <div v-if="showSettings" class="mb-8 bg-white dark:bg-surface-card rounded-2xl border border-gray-200 dark:border-surface-border p-6 shadow-xl dark:shadow-[0_0_40px_rgba(0,0,0,0.3)]">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-sm font-bold uppercase tracking-widest text-gray-900 dark:text-white">Board Settings</h3>
+          <div class="flex items-center gap-3">
+            <h3 class="text-sm font-bold uppercase tracking-widest text-gray-900 dark:text-white">Board Settings</h3>
+            <button
+              @click="showHelpModal = true"
+              class="w-6 h-6 flex items-center justify-center rounded-full bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/20 hover:bg-neon-cyan/20 transition-all text-xs"
+              title="MCP Help Guide"
+            >
+              ❓
+            </button>
+          </div>
           <button @click="showSettings = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">&times;</button>
         </div>
 

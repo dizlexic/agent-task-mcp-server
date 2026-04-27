@@ -5,6 +5,10 @@
 <h1 align="center">Moo Tasks</h1>
 
 <p align="center">
+  <a href="https://mootasks.dev">mootasks.dev</a>
+</p>
+
+<p align="center">
   <strong>A kanban-style task management dashboard with an integrated MCP server.</strong><br/>
   Human users manage tasks via a drag-and-drop web UI, while AI agents connect via the MCP server to discover, accept, update, and create tasks programmatically.
 </p>
@@ -77,7 +81,7 @@ If you prefer to run locally without Docker:
 
 Get up and running in just a few minutes:
 
-1.  **Launch**: Once the server is running, navigate to `http://localhost:3000`.
+1.  **Launch**: Once the server is running, navigate to `http://localhost:3000` (or the live site at [mootasks.dev](https://mootasks.dev)).
 2.  **Account**: **Register** your account at `/register` or login.
 3.  **Create Board**: Head to the **Dashboard** to create your first project board.
 4.  **Manage Tasks**: Add, move, and update tasks on your new board using the drag-and-drop Kanban view or the list view.
@@ -105,7 +109,15 @@ Copy `.env.example` to `.env` and adjust as needed:
 
 ## 🤖 MCP Server
 
-Each board has its own MCP endpoint at `/api/boards/:boardId/mcp`. AI agents connect to a specific board to work on its tasks.
+**Moo Tasks is primarily an MCP server and Agent API.** While it provides a web interface for humans, its core purpose is to enable AI agents to manage tasks programmatically.
+
+### 🎯 Board-Scoped Architecture
+
+**Everything in Moo Tasks is scoped to a board.** There are no global queries for tasks. This ensures that agents only work within the context they are assigned to, improving focus and security.
+
+- Each board has its own unique MCP endpoint.
+- AI agents connect to a specific board to work on its tasks.
+- Resources, prompts, and tools are all scoped to the active board.
 
 ### 📋 Working with Tasks via MCP
 

@@ -1,14 +1,22 @@
 <script setup lang="ts">
+const currentBoardName = useState<string | null>('currentBoardName', () => null)
+
 const { loggedIn, user, clear } = useUserSession()
 const { public: { siteName } } = useRuntimeConfig()
-useHead({ title: siteName })
+
+useHead({
+  title: computed(() => currentBoardName.value ? `${currentBoardName.value} | ${siteName}` : siteName)
+})
 
 const isDark = ref(false)
 const mobileMenuOpen = ref(false)
 const route = useRoute()
 
-watch(() => route.path, () => {
+watch(() => route.path, (path) => {
   mobileMenuOpen.value = false
+  if (!path.startsWith('/boards/')) {
+    currentBoardName.value = null
+  }
 })
 
 onMounted(() => {
@@ -54,11 +62,11 @@ async function logout() {
     >
       <NuxtLink
         to="/dashboard"
-        class="flex items-center gap-2 text-xl font-black text-gray-900 dark:text-white hover:text-neon-cyan dark:hover:text-neon-cyan transition-all group"
+        class="flex items-center gap-2 text-xl font-black text-gray-900 dark:text-white hover:text-neon-cyan dark:hover:text-neon-cyan transition-all group min-w-0"
         aria-label="Go to dashboard"
       >
-        <span class="text-2xl group-hover:scale-110 transition-transform" aria-hidden="true">🐄</span>
-        <span class="tracking-tight">{{ siteName }}</span>
+        <span class="text-2xl group-hover:scale-110 transition-transform shrink-0" aria-hidden="true">🐄</span>
+        <span class="tracking-tight truncate">{{ currentBoardName || siteName }}</span>
       </NuxtLink>
       <div class="flex items-center gap-6">
         <nav class="hidden md:flex items-center gap-6" aria-label="Main navigation">
