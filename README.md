@@ -451,5 +451,5 @@ services:
 <p align="center">
   <img src="public/logo.svg" alt="Moo Tasks" width="48" />
   <br/>
-  <sub>Built with 🐄 by the Moo Tasks team</sub>
+  <sub>Built with 🐄 by <a href="https://buymeacoffee.com/dizlexic">dizlexic</a></sub>
 </p>

@@ -83,13 +83,23 @@ async function onCreateCorrection() {
   if (!correctionTitle.value.trim()) return
   correctionSubmitting.value = true
   try {
-    await createTask({
+    const newTask = await createTask({
       title: correctionTitle.value.trim(),
       description: correctionDescription.value.trim(),
       priority: correctionPriority.value,
       parentTaskId: props.task.id,
       status: 'todo',
     })
+
+    // Add comment linking back to original task
+    try {
+      const origin = window.location.origin
+      const originalTaskLink = `${origin}/boards/${props.boardId}?taskId=${props.task.id}`
+      await addComment(newTask.id, `Created from correction request on task: [${props.task.title}](${originalTaskLink})`)
+    } catch (commentError) {
+      console.error('Failed to add link comment:', commentError)
+    }
+
     showCorrectionForm.value = false
     correctionTitle.value = ''
     correctionDescription.value = ''

@@ -16,10 +16,12 @@ const showSettings = ref(false)
 const showHelpModal = ref(false)
 const showMcpConfig = ref(false)
 const allFunctionsEnabled = ref(true)
+const newName = ref('')
 
 watch(() => board.value, (newBoard) => {
   if (newBoard) {
     currentBoardName.value = newBoard.name
+    newName.value = newBoard.name
     const enabledFunctions = (newBoard.mcpEnabledFunctions as Record<string, boolean>) || {}
     allFunctionsEnabled.value = !Object.values(enabledFunctions).includes(false)
   }
@@ -62,6 +64,20 @@ async function toggleMcpFunction(fn: string) {
     board.value.mcpEnabledFunctions = updated.mcpEnabledFunctions
   } catch (e: any) {
     alert(e.data?.message || 'Failed to update MCP function setting')
+  }
+}
+
+async function updateBoardName() {
+  if (!board.value || board.value.role !== 'owner' || !newName.value) return
+  try {
+    const updated = await $fetch<Board & { role: string }>(`/api/boards/${boardId}`, {
+      method: 'PATCH',
+      body: { name: newName.value.trim() }
+    })
+    board.value.name = updated.name
+    currentBoardName.value = updated.name
+  } catch (e: any) {
+    alert(e.data?.message || 'Failed to rename board')
   }
 }
 
@@ -261,6 +277,26 @@ onUnmounted(() => stopSocket())
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div class="space-y-6">
+            <!-- General Board Settings -->
+            <div v-if="board.role === 'owner'" class="space-y-3">
+              <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block ml-1">Board Name</label>
+              <div class="flex gap-2">
+                <input
+                  v-model="newName"
+                  type="text"
+                  class="flex-1 bg-gray-50 dark:bg-surface-dark/50 border border-gray-200 dark:border-surface-border rounded-xl px-4 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50 transition-all"
+                  placeholder="Board Name"
+                />
+                <button
+                  @click="updateBoardName"
+                  :disabled="!newName || newName === board.name"
+                  class="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 transition-all disabled:opacity-50 shadow-sm active:scale-95"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+
             <!-- MCP Bearer Token -->
             <div v-if="board.role === 'owner'" class="space-y-3">
               <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block ml-1">MCP Bearer Token</label>

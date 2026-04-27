@@ -19,7 +19,12 @@ export function useTasks(boardId: string) {
   }
 
   function tasksByStatus(status: TaskStatus): Task[] {
-    return tasks.value.filter(t => t.status === status).sort((a, b) => a.order - b.order)
+    return tasks.value
+      .filter(t => t.status === status)
+      .sort((a, b) => {
+        if (a.order !== b.order) return a.order - b.order
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      })
   }
 
   async function createTask(data: {
@@ -47,6 +52,13 @@ export function useTasks(boardId: string) {
   async function deleteTask(id: string) {
     await $fetch(`/api/tasks/${id}`, { method: 'DELETE' })
     tasks.value = tasks.value.filter(t => t.id !== id)
+  }
+
+  async function addComment(taskId: string, content: string) {
+    return await $fetch(`/api/tasks/${taskId}/comments`, {
+      method: 'POST',
+      body: { content }
+    })
   }
 
   async function moveTask(id: string, status: TaskStatus, order: number) {
@@ -88,5 +100,5 @@ export function useTasks(boardId: string) {
     socket.off('task:deleted')
   }
 
-  return { tasks, loading, fetchTasks, tasksByStatus, createTask, updateTask, deleteTask, moveTask, startSocket, stopSocket }
+  return { tasks, loading, fetchTasks, tasksByStatus, createTask, updateTask, deleteTask, addComment, moveTask, startSocket, stopSocket }
 }
