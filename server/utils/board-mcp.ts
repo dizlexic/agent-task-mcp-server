@@ -5,6 +5,7 @@ import { db } from '../db'
 import { tasks, comments, instructions, boards } from '../db/schema'
 import { generateId } from './id'
 import { emitTaskEvent } from './socket'
+import { reorderTasks } from './tasks'
 
 async function getInstructionContent(boardId: string, type: 'agent_instructions' | 'task_workflow'): Promise<string> {
   // Try board-specific first, then fall back to global
@@ -102,12 +103,14 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
           description: description?.trim() || '',
           status: 'backlog' as const,
           priority: priority || ('medium' as const),
+          order: 0,
           assignee: null,
           parentTaskId: parentTaskId?.trim() || null,
           createdAt: now,
           updatedAt: now,
         }
         await db.insert(tasks).values(newTask)
+        await reorderTasks(boardId, 'backlog', newTask.id, 0)
         emitTaskEvent(boardId, 'task:created', newTask)
         return { content: [{ type: 'text', text: JSON.stringify({ message: 'Task created', task: newTask }) }] }
       },
@@ -180,12 +183,14 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
           description: description?.trim() || '',
           status: 'todo' as const,
           priority: priority || existing.priority || ('medium' as const),
+          order: 0,
           assignee: null,
           parentTaskId: taskId,
           createdAt: now,
           updatedAt: now,
         }
         await db.insert(tasks).values(correctionTask)
+        await reorderTasks(boardId, 'todo', correctionTask.id, 0)
         emitTaskEvent(boardId, 'task:created', correctionTask)
 
         // Move original task back to in_progress
