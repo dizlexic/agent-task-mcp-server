@@ -4,6 +4,7 @@ import { db } from '../../../../db'
 import { tasks, boardMembers } from '../../../../db/schema'
 import { generateId } from '../../../../utils/id'
 import { emitTaskEvent } from '../../../../utils/socket'
+import { reorderTasks } from '../../../../utils/tasks'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -35,12 +36,14 @@ export default defineEventHandler(async (event) => {
     description: body.description?.trim() || '',
     status,
     priority,
+    order: 0,
     assignee: body.assignee?.trim() || null,
     createdAt: now,
     updatedAt: now,
   }
 
   await db.insert(tasks).values(newTask)
+  await reorderTasks(boardId, status, newTask.id, 0)
   emitTaskEvent(boardId, 'task:created', newTask)
   return newTask
 })

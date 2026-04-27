@@ -45,9 +45,9 @@ function getPoolConfig(): mysql.PoolOptions {
     ...baseOpts,
     host: process.env.DB_HOST || 'localhost',
     port: Number(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER || 'root',
+    user: process.env.DB_USER || 'mootasks',
     password: process.env.DB_PASSWORD || 'password',
-    database: process.env.DB_NAME || 'db',
+    database: process.env.DB_NAME || 'mootasks',
     ssl: process.env.DB_SSL === 'REQUIRED' ? { rejectUnauthorized: false } : undefined,
   }
 }

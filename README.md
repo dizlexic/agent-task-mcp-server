@@ -101,7 +101,7 @@ Copy `.env.example` to `.env` and adjust as needed:
 | `DB_USER` | `mootasks` | MySQL user |
 | `DB_PASSWORD` | `mootasks` | MySQL password |
 | `DB_NAME` | `mootasks` | MySQL database name |
-| `DB_LOCAL_PORT` | `3307` | MySQL local port mapping |
+| `DB_PORT` | `3307` | MySQL local port mapping |
 | `DATABASE_URL` | *(required if not using Docker)* | MySQL connection string |
 | `NUXT_SESSION_PASSWORD` | *(required)* | 32+ char secret for sealed cookie sessions |
 

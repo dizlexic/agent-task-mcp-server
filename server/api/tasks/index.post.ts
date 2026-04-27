@@ -3,6 +3,8 @@ import { eq, and } from 'drizzle-orm'
 import { db } from '../../db'
 import { tasks, boardMembers } from '../../db/schema'
 import { generateId } from '../../utils/id'
+import { reorderTasks } from '../../utils/tasks'
+import { emitTaskEvent } from '../../utils/socket'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -37,7 +39,7 @@ export default defineEventHandler(async (event) => {
     description: body.description?.trim() || '',
     status,
     priority,
-    order: body.order ? parseInt(body.order, 10) : 0,
+    order: body.order !== undefined ? parseInt(body.order, 10) : 0,
     assignee: body.assignee?.trim() || null,
     parentTaskId: body.parentTaskId?.trim() || null,
     createdAt: now,
@@ -45,6 +47,8 @@ export default defineEventHandler(async (event) => {
   }
 
   await db.insert(tasks).values(newTask)
+  await reorderTasks(body.boardId, status, newTask.id, newTask.order)
+  emitTaskEvent(body.boardId, 'task:created', newTask)
 
   return newTask
 })
