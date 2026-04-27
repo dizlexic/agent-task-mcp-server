@@ -166,12 +166,12 @@ function openParentTask() {
         <form @submit.prevent="onSave" id="task-edit-form" class="space-y-6">
           <div class="space-y-1.5">
             <label for="task-title" class="block text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 ml-1">Title</label>
-            <input id="task-title" v-model="title" type="text" required class="w-full border border-gray-200 dark:border-surface-border dark:bg-surface-raised dark:text-white rounded-xl px-4 py-3 text-base font-medium focus:ring-2 focus:ring-neon-cyan/30 focus:border-neon-cyan/50 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600" placeholder="Task title..." />
+            <input id="task-title" v-model="title" type="text" required class="w-full border border-gray-200 dark:border-surface-border dark:bg-surface-raised dark:text-white rounded-xl px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-neon-cyan/30 focus:border-neon-cyan/50 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600" placeholder="Task title..." />
           </div>
 
           <div class="space-y-1.5">
             <label for="task-description" class="block text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 ml-1">Description</label>
-            <textarea id="task-description" v-model="description" rows="4" class="w-full border border-gray-200 dark:border-surface-border dark:bg-surface-raised dark:text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-neon-cyan/30 focus:border-neon-cyan/50 outline-none resize-none transition-all leading-relaxed placeholder:text-gray-400 dark:placeholder:text-gray-600" placeholder="Describe the task in detail..." />
+            <textarea id="task-description" v-model="description" rows="6" class="w-full border border-gray-200 dark:border-surface-border dark:bg-surface-raised dark:text-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-neon-cyan/30 focus:border-neon-cyan/50 outline-none resize-none transition-all leading-relaxed placeholder:text-gray-400 dark:placeholder:text-gray-600" placeholder="Describe the task in detail..." />
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -289,15 +289,15 @@ function openParentTask() {
             <button type="button" @click="confirmDelete = false" class="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Cancel</button>
           </div>
         </div>
-        <div class="flex gap-3">
-          <button type="button" @click="emit('close')" class="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">Cancel</button>
+        <div class="flex gap-2">
+          <button type="button" @click="emit('close')" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors" title="Cancel">Cancel</button>
           <button
             type="submit"
             form="task-edit-form"
             :disabled="saving || !title.trim()"
-            class="px-8 py-2.5 text-xs font-bold uppercase tracking-widest bg-neon-cyan text-cyan-950 dark:text-gray-900 rounded-xl hover:bg-neon-cyan/90 disabled:opacity-50 transition-all shadow-lg shadow-neon-cyan/20 active:scale-95"
+            class="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-neon-cyan text-cyan-950 dark:text-gray-900 rounded-lg hover:bg-neon-cyan/90 disabled:opacity-50 transition-all shadow-md shadow-neon-cyan/20 active:scale-95"
           >
-            {{ saving ? 'Saving...' : 'Save Changes' }}
+            {{ saving ? 'Saving...' : 'Save' }}
           </button>
         </div>
       </div>

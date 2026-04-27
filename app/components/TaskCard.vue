@@ -22,7 +22,7 @@ const priorityBorder: Record<string, string> = {
 
 <template>
   <div
-    class="bg-white dark:bg-surface-raised rounded-xl shadow-sm dark:shadow-md dark:shadow-black/20 border border-gray-200 dark:border-surface-border p-3.5 cursor-pointer hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-neon-cyan/10 hover:-translate-y-0.5 hover:border-gray-300 dark:hover:border-neon-cyan/30 transition-all duration-200 group"
+    class="bg-white dark:bg-surface-raised rounded-xl shadow-sm dark:shadow-md dark:shadow-black/20 border border-gray-200 dark:border-surface-border p-3 cursor-pointer hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-neon-cyan/10 hover:-translate-y-0.5 hover:border-gray-300 dark:hover:border-neon-cyan/30 transition-all duration-200 group"
     :class="priorityBorder[task.priority] || priorityBorder.medium"
     role="button"
     :aria-label="`Task: ${task.title}, Priority: ${task.priority}${task.assignee ? ', Assigned to: ' + task.assignee : ''}`"
@@ -30,16 +30,16 @@ const priorityBorder: Record<string, string> = {
     @click="emit('click', task)"
     @keydown.enter="emit('click', task)"
   >
-    <div class="flex items-start justify-between gap-3 mb-1.5">
-      <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-snug group-hover:text-black dark:group-hover:text-white transition-colors">{{ task.title }}</h4>
+    <div class="flex items-start justify-between gap-2 mb-1">
+      <h4 class="text-xs font-semibold text-gray-800 dark:text-gray-100 leading-snug group-hover:text-black dark:group-hover:text-white transition-colors">{{ task.title }}</h4>
       <span
-        class="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider"
+        class="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider"
         :class="priorityColors[task.priority] || priorityColors.medium"
       >
         {{ task.priority }}
       </span>
     </div>
-    <p v-if="task.description" class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3 leading-relaxed">
+    <p v-if="task.description" class="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-2 mb-2 leading-relaxed">
       {{ task.description }}
     </p>
     <div class="flex items-center justify-between gap-2 mt-auto">
