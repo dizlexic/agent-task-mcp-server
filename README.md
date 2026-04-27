@@ -178,7 +178,10 @@ Both support **reset to default** to restore the original built-in instructions.
   "mcpServers": {
     "moo-tasks": {
       "type": "streamable-http",
-      "url": "http://localhost:3000/api/boards/<boardId>/mcp?token=<your-bearer-token>"
+      "url": "http://localhost:3000/api/boards/<boardId>/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-bearer-token>"
+      }
     }
   }
 }
@@ -196,7 +199,10 @@ Add to `.cursor/mcp.json`:
   "mcpServers": {
     "moo-tasks": {
       "type": "streamable-http",
-      "url": "http://localhost:3000/api/boards/<boardId>/mcp?token=<your-bearer-token>"
+      "url": "http://localhost:3000/api/boards/<boardId>/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-bearer-token>"
+      }
     }
   }
 }
@@ -205,20 +211,32 @@ Add to `.cursor/mcp.json`:
 </details>
 
 <details>
-<summary><strong>VS Code</strong></summary>
+<summary><strong>VS Code / JetBrains / generic MCP client</strong></summary>
 
-Add to settings or `.vscode/mcp.json`:
+Add to your client's MCP config (e.g. `.vscode/mcp.json` or JetBrains MCP settings):
 
 ```json
 {
   "mcpServers": {
     "moo-tasks": {
       "type": "streamable-http",
-      "url": "http://localhost:3000/api/boards/<boardId>/mcp?token=<your-bearer-token>"
+      "url": "http://localhost:3000/api/boards/<boardId>/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-bearer-token>"
+      }
     }
   }
 }
 ```
+
+> 💡 The board page has a **📋 Copy JSON** button that emits this exact snippet pre-filled with your board ID and token.
+
+### 🔐 Security & Scoping
+
+- Each MCP endpoint is **scoped to a single board** (`/api/boards/<boardId>/mcp`). The server only ever sees tasks, comments, and instructions belonging to that one board.
+- Tokens are sent via the standard `Authorization: Bearer <token>` HTTP header per the [MCP authorization spec](https://modelcontextprotocol.io/specification/2025-11-25/basic). Query-string tokens are no longer accepted.
+- Generate or revoke a board's token from the board settings drawer at any time. Revoking immediately invalidates all existing agent connections.
+- Boards may also be marked `mcpPublic` in settings for read-friendly demos; in that mode no token is required, but it is **not recommended** for real work.
 
 </details>
 

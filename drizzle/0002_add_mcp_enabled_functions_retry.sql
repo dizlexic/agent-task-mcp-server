@@ -1,1 +1,0 @@
-ALTER TABLE `boards` ADD COLUMN IF NOT EXISTS `mcp_enabled_functions` json;

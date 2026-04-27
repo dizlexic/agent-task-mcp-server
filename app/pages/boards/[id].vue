@@ -71,16 +71,21 @@ async function copyToken() {
 
 const mcpConfig = computed(() => {
   const origin = import.meta.client ? window.location.origin : ''
-  const url = mcpToken.value
-    ? `${origin}/api/boards/${boardId}/mcp?token=${mcpToken.value}`
-    : `${origin}/api/boards/${boardId}/mcp`
+  const url = `${origin}/api/boards/${boardId}/mcp`
+
+  const server: Record<string, any> = {
+    type: 'streamable-http',
+    url
+  }
+  if (mcpToken.value) {
+    server.headers = {
+      Authorization: `Bearer ${mcpToken.value}`
+    }
+  }
 
   const config = {
     mcpServers: {
-      'moo-tasks': {
-        type: 'streamable-http',
-        url
-      }
+      'moo-tasks': server
     }
   }
   return JSON.stringify(config, null, 2)

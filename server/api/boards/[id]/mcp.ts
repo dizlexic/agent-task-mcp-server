@@ -1,4 +1,4 @@
-import { getRouterParam, getQuery, createError, defineEventHandler } from 'h3'
+import { getRouterParam, createError, defineEventHandler } from 'h3'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { eq } from 'drizzle-orm'
 import { db } from '../../../db'
@@ -7,28 +7,35 @@ import { createBoardMcpServer } from '../../../utils/board-mcp'
 
 export default defineEventHandler(async (event) => {
   const boardId = getRouterParam(event, 'id')!
-  const query = getQuery(event)
 
-  // Verify board exists
+  // Verify board exists. Board IDs are scoped to a single board so the MCP server
+  // created below can only ever access tasks/comments for THIS board.
   const boardResults = await db.select().from(boards).where(eq(boards.id, boardId))
   const board = boardResults[0]
   if (!board) {
     throw createError({ statusCode: 404, statusMessage: 'Board not found' })
   }
 
-  // Validate bearer token if board has one configured or if it's private
+  // Per MCP spec (2025-11-25 / basic), authorization MUST be sent via the
+  // standard HTTP `Authorization: Bearer <token>` header. We no longer accept
+  // tokens via query string for security reasons (avoids leakage in logs/history).
   if (!board.mcpPublic) {
     if (!board.mcpToken) {
+      // Advertise bearer auth scheme on 401 per RFC 6750.
+      event.node.res.setHeader('WWW-Authenticate', 'Bearer realm="moo-tasks", error="server_error"')
       throw createError({ statusCode: 401, statusMessage: 'MCP endpoint is private and no token is configured. Please generate a token in board settings.' })
     }
 
     const authHeader = event.node.req.headers.authorization || ''
-    const token = authHeader.startsWith('Bearer ')
-      ? authHeader.slice(7)
-      : (getQuery(event).token as string) || ''
+    if (!authHeader.startsWith('Bearer ')) {
+      event.node.res.setHeader('WWW-Authenticate', 'Bearer realm="moo-tasks"')
+      throw createError({ statusCode: 401, statusMessage: 'Missing Authorization: Bearer <token> header' })
+    }
+    const token = authHeader.slice(7).trim()
 
     if (token !== board.mcpToken) {
-      throw createError({ statusCode: 401, statusMessage: 'Invalid or missing bearer token' })
+      event.node.res.setHeader('WWW-Authenticate', 'Bearer realm="moo-tasks", error="invalid_token"')
+      throw createError({ statusCode: 401, statusMessage: 'Invalid bearer token' })
     }
   }
 
