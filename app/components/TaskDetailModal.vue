@@ -184,6 +184,7 @@ function openParentTask() {
                   <option value="in_progress">In Progress</option>
                   <option value="review">Review</option>
                   <option value="done">Done</option>
+                  <option value="archive">Archive</option>
                 </select>
                 <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" aria-hidden="true">▼</div>
               </div>

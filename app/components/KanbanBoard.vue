@@ -3,8 +3,12 @@ import type { Task } from '../../server/db/schema'
 import type { TaskStatus } from '../composables/useTasks'
 import { COLUMNS } from '../utils/task-constants'
 
-const props = defineProps<{ boardId: string }>()
+const props = defineProps<{ boardId: string, showArchive: boolean }>()
 const { tasksByStatus, moveTask } = useTasks(props.boardId)
+
+const columns = computed(() => {
+  return props.showArchive ? [...COLUMNS, { title: 'Archive', status: 'archive' }] : COLUMNS
+})
 
 const emit = defineEmits<{ taskClick: [task: Task] }>()
 
@@ -16,7 +20,7 @@ async function onTaskMoved(taskId: string, newStatus: string, newIndex: number) 
 <template>
   <div class="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none">
     <KanbanColumn
-      v-for="col in COLUMNS"
+      v-for="col in columns"
       :key="col.status"
       :title="col.title"
       :status="col.status"

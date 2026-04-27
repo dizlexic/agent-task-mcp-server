@@ -36,7 +36,7 @@ export const tasks = mysqlTable('tasks', {
   boardId: varchar('board_id', { length: 191 }).notNull().references(() => boards.id, { onDelete: 'cascade' }),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description'),
-  status: mysqlEnum('status', ['backlog', 'todo', 'in_progress', 'review', 'done']).notNull().default('backlog'),
+  status: mysqlEnum('status', ['backlog', 'todo', 'in_progress', 'review', 'done', 'archive']).notNull().default('backlog'),
   priority: mysqlEnum('priority', ['low', 'medium', 'high', 'critical']).notNull().default('medium'),
   order: int('order').notNull().default(0),
   assignee: varchar('assignee', { length: 255 }),

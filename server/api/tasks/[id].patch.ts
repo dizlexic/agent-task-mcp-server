@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (body.status !== undefined) {
-    const validStatuses = ['backlog', 'todo', 'in_progress', 'review', 'done']
+    const validStatuses = ['backlog', 'todo', 'in_progress', 'review', 'done', 'archive']
     if (!validStatuses.includes(body.status)) {
       throw createError({ statusCode: 400, statusMessage: `Invalid status: ${body.status}` })
     }

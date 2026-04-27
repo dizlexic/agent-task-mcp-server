@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
   const validPriorities = ['low', 'medium', 'high', 'critical']
   const priority = body.priority && validPriorities.includes(body.priority) ? body.priority : 'medium'
 
-  const validStatuses = ['backlog', 'todo', 'in_progress', 'review', 'done']
+  const validStatuses = ['backlog', 'todo', 'in_progress', 'review', 'done', 'archive']
   const status = body.status && validStatuses.includes(body.status) ? body.status : 'backlog'
 
   const now = new Date()

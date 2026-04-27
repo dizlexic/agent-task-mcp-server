@@ -39,4 +39,10 @@ export const COLUMN_COLORS: Record<TaskStatus, { border: string; glow: string; b
     badge: 'bg-neon-green/10 text-green-600 dark:text-neon-green border border-neon-green/20',
     text: 'text-green-600 dark:text-neon-green',
   },
+  archive: {
+    border: 'border-t-gray-500',
+    glow: '',
+    badge: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
+    text: 'text-gray-500 dark:text-gray-400',
+  },
 }

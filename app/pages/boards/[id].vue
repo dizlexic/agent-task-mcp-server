@@ -18,17 +18,20 @@ const showMcpConfig = ref(false)
 const showAgentsMarkdown = ref(false)
 const allFunctionsEnabled = ref(true)
 const newName = ref('')
+const newDescription = ref('')
 
 watch(() => board.value, (newBoard) => {
   if (newBoard) {
     currentBoardName.value = newBoard.name
     newName.value = newBoard.name
+    newDescription.value = newBoard.description || ''
     const enabledFunctions = (newBoard.mcpEnabledFunctions as Record<string, boolean>) || {}
     allFunctionsEnabled.value = !Object.values(enabledFunctions).includes(false)
   }
 }, { immediate: true })
 
 const viewMode = ref<'board' | 'list'>('board')
+const showArchive = ref(false)
 
 const mcpConfigCopied = ref(false)
 const mcpToken = ref<string | null>(null)
@@ -79,6 +82,19 @@ async function updateBoardName() {
     currentBoardName.value = updated.name
   } catch (e: any) {
     alert(e.data?.message || 'Failed to rename board')
+  }
+}
+
+async function updateBoardDescription() {
+  if (!board.value || board.value.role !== 'owner') return
+  try {
+    const updated = await $fetch<Board & { role: string }>(`/api/boards/${boardId}`, {
+      method: 'PATCH',
+      body: { description: newDescription.value.trim() }
+    })
+    board.value.description = updated.description
+  } catch (e: any) {
+    alert(e.data?.message || 'Failed to update board description')
   }
 }
 
@@ -219,6 +235,13 @@ onUnmounted(() => stopSocket())
           </button>
         </div>
         <button
+          @click="showArchive = !showArchive"
+          class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest rounded-xl border border-gray-200 dark:border-surface-border transition-all active:scale-95 shadow-sm"
+          :class="showArchive ? 'bg-gray-200 dark:bg-surface-hover text-gray-900 dark:text-white' : 'bg-white dark:bg-surface-card text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-surface-raised'"
+        >
+          {{ showArchive ? 'Hide Archive' : 'View Archive' }}
+        </button>
+        <button
           @click="showSettings = !showSettings"
           class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 bg-white dark:bg-surface-card border border-gray-200 dark:border-surface-border rounded-xl hover:bg-gray-50 dark:hover:bg-surface-raised transition-all active:scale-95 shadow-sm"
           :class="{ 'ring-2 ring-neon-cyan/30 border-neon-cyan/50': showSettings }"
@@ -298,6 +321,25 @@ onUnmounted(() => stopSocket())
                 <button
                   @click="updateBoardName"
                   :disabled="!newName || newName === board.name"
+                  class="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 transition-all disabled:opacity-50 shadow-sm active:scale-95"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+
+            <div v-if="board.role === 'owner'" class="space-y-3">
+              <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block ml-1">Board Description</label>
+              <div class="flex gap-2">
+                <textarea
+                  v-model="newDescription"
+                  class="flex-1 bg-gray-50 dark:bg-surface-dark/50 border border-gray-200 dark:border-surface-border rounded-xl px-4 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50 transition-all"
+                  placeholder="Board Description"
+                  rows="3"
+                />
+                <button
+                  @click="updateBoardDescription"
+                  :disabled="newDescription === (board.description || '')"
                   class="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 transition-all disabled:opacity-50 shadow-sm active:scale-95"
                 >
                   Save
@@ -486,7 +528,7 @@ onUnmounted(() => stopSocket())
     </transition>
 
     <div class="relative min-h-[60vh]">
-      <KanbanBoard v-if="viewMode === 'board'" :board-id="boardId" @task-click="selectedTask = $event" />
+      <KanbanBoard v-if="viewMode === 'board'" :board-id="boardId" :show-archive="showArchive" @task-click="selectedTask = $event" />
       <TaskListView v-else :board-id="boardId" @task-click="selectedTask = $event" />
     </div>
 

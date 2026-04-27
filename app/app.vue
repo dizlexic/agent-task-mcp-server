@@ -171,6 +171,8 @@ async function logout() {
       <div class="flex flex-col items-center gap-4">
         <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-600">
           Built with <span class="text-neon-pink" aria-label="love">♥</span> by 🐄 <a href="https://buymeacoffee.com/dizlexic" target="_blank" rel="noopener noreferrer" class="hover:text-neon-cyan transition-all">dizlexic</a> •
+          <NuxtLink to="/faq" class="hover:text-neon-cyan transition-all">FAQ</NuxtLink> •
+          <NuxtLink to="/about" class="hover:text-neon-cyan transition-all">About</NuxtLink> •
           <a
             href="https://github.com/dizlexic/moo-agent-board"
             target="_blank"

@@ -1,6 +1,6 @@
 import type { Task } from '../../server/db/schema'
 
-export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done'
+export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done' | 'archive'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
 
 export function useTasks(boardId: string) {

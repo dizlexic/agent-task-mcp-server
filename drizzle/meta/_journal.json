@@ -43,6 +43,13 @@
       "when": 1777277980078,
       "tag": "0005_clever_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1777279638333,
+      "tag": "0006_orange_swordsman",
+      "breakpoints": true
     }
   ]
 }

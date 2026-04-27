@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   allTasks = allTasks.filter(t => boardIds.includes(t.boardId))
 
   if (status) {
-    const validStatuses = ['backlog', 'todo', 'in_progress', 'done']
+    const validStatuses = ['backlog', 'todo', 'in_progress', 'review', 'done', 'archive']
     if (!validStatuses.includes(status)) {
       throw createError({ statusCode: 400, statusMessage: `Invalid status: ${status}` })
     }
