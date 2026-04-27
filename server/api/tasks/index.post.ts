@@ -42,8 +42,13 @@ export default defineEventHandler(async (event) => {
     order: body.order !== undefined ? parseInt(body.order, 10) : 0,
     assignee: body.assignee?.trim() || null,
     parentTaskId: body.parentTaskId?.trim() || null,
+    difficulty: (body.difficulty !== undefined && body.difficulty !== null) ? parseInt(body.difficulty, 10) : null,
     createdAt: now,
     updatedAt: now,
+  }
+
+  if (newTask.difficulty !== null && (isNaN(newTask.difficulty) || newTask.difficulty < 1 || newTask.difficulty > 5)) {
+    throw createError({ statusCode: 400, statusMessage: 'Difficulty must be between 1 and 5' })
   }
 
   await db.insert(tasks).values(newTask)

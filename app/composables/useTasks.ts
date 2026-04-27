@@ -34,6 +34,7 @@ export function useTasks(boardId: string) {
     status?: TaskStatus
     assignee?: string
     parentTaskId?: string
+    difficulty?: number
   }) {
     const task = await $fetch<Task>(`/api/boards/${boardId}/tasks`, { method: 'POST', body: data })
     // Optimistic update — socket event will reconcile
@@ -42,7 +43,7 @@ export function useTasks(boardId: string) {
     return task
   }
 
-  async function updateTask(id: string, data: Partial<Pick<Task, 'title' | 'description' | 'status' | 'priority' | 'assignee' | 'order'>>) {
+  async function updateTask(id: string, data: Partial<Pick<Task, 'title' | 'description' | 'status' | 'priority' | 'assignee' | 'order' | 'difficulty'>>) {
     const updated = await $fetch<Task>(`/api/tasks/${id}`, { method: 'PATCH', body: data })
     const idx = tasks.value.findIndex(t => t.id === id)
     if (idx !== -1) tasks.value[idx] = updated

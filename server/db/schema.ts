@@ -41,6 +41,7 @@ export const tasks = mysqlTable('tasks', {
   order: int('order').notNull().default(0),
   assignee: varchar('assignee', { length: 255 }),
   parentTaskId: varchar('parent_task_id', { length: 191 }),
+  difficulty: int('difficulty'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
 })

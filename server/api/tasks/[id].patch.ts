@@ -68,6 +68,18 @@ export default defineEventHandler(async (event) => {
     updates.order = parseInt(body.order, 10)
   }
 
+  if (body.difficulty !== undefined) {
+    if (body.difficulty === null) {
+      updates.difficulty = null
+    } else {
+      const difficulty = parseInt(body.difficulty, 10)
+      if (isNaN(difficulty) || difficulty < 1 || difficulty > 5) {
+        throw createError({ statusCode: 400, statusMessage: 'Difficulty must be between 1 and 5' })
+      }
+      updates.difficulty = difficulty
+    }
+  }
+
   await db.update(tasks).set(updates).where(eq(tasks.id, id))
 
   const finalResults = await db.select().from(tasks).where(eq(tasks.id, id))
