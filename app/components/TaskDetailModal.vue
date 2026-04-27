@@ -272,6 +272,11 @@ function openParentTask() {
             </div>
           </div>
         </form>
+
+        <!-- Comments Section -->
+        <div class="pt-6 border-t border-gray-100 dark:border-surface-border/50">
+          <TaskComments :task-id="task.id" :board-id="boardId" />
+        </div>
       </div>
 
       <!-- Footer -->

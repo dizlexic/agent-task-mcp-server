@@ -61,6 +61,10 @@ export function useTasks(boardId: string) {
     })
   }
 
+  async function fetchComments(taskId: string) {
+    return await $fetch<any[]>(`/api/tasks/${taskId}/comments`)
+  }
+
   async function moveTask(id: string, status: TaskStatus, order: number) {
     return updateTask(id, { status, order })
   }
@@ -100,5 +104,5 @@ export function useTasks(boardId: string) {
     socket.off('task:deleted')
   }
 
-  return { tasks, loading, fetchTasks, tasksByStatus, createTask, updateTask, deleteTask, addComment, moveTask, startSocket, stopSocket }
+  return { tasks, loading, fetchTasks, tasksByStatus, createTask, updateTask, deleteTask, addComment, fetchComments, moveTask, startSocket, stopSocket }
 }

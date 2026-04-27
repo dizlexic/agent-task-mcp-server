@@ -15,6 +15,7 @@ const selectedTask = ref<Task | null>(null)
 const showSettings = ref(false)
 const showHelpModal = ref(false)
 const showMcpConfig = ref(false)
+const showAgentsMarkdown = ref(false)
 const allFunctionsEnabled = ref(true)
 const newName = ref('')
 
@@ -250,6 +251,13 @@ onUnmounted(() => stopSocket())
       @close="showHelpModal = false"
     />
 
+    <AgentsMarkdownModal
+      v-if="showAgentsMarkdown"
+      :board="board"
+      :mcp-token="mcpToken"
+      @close="showAgentsMarkdown = false"
+    />
+
     <!-- Settings Panel -->
     <transition
       enter-active-class="transition duration-200 ease-out"
@@ -422,6 +430,13 @@ onUnmounted(() => stopSocket())
               <div class="flex items-center justify-between ml-1">
                 <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300">MCP Client Configuration</label>
                 <div class="flex gap-2">
+                  <button
+                    @click="showAgentsMarkdown = true"
+                    class="text-[9px] font-black uppercase tracking-tighter px-2 py-1 rounded-md transition-all shadow-sm bg-neon-purple/10 text-neon-purple border border-neon-purple/20 hover:bg-neon-purple/20"
+                    title="Show example AGENTS.md for your project"
+                  >
+                    📄 AGENTS.md
+                  </button>
                   <button
                     @click="showMcpConfig = !showMcpConfig"
                     class="text-[9px] font-black uppercase tracking-tighter px-2 py-1 rounded-md transition-all shadow-sm bg-gray-100 dark:bg-surface-raised text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"

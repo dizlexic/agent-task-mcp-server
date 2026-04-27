@@ -53,6 +53,7 @@ async function logout() {
 
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-surface-dark transition-colors duration-500">
+    <GoogleAnalytics />
     <a href="#main-content" class="skip-to-content">Skip to content</a>
 
     <header
