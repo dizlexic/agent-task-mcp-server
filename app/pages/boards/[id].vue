@@ -13,6 +13,7 @@ const showCreateForm = ref(false)
 const showDeleteModal = ref(false)
 const selectedTask = ref<Task | null>(null)
 const showSettings = ref(false)
+const activeTab = ref<'general' | 'mcp'>('general')
 const showHelpModal = ref(false)
 const showMcpConfig = ref(false)
 const showAgentsMarkdown = ref(false)
@@ -20,9 +21,12 @@ const allFunctionsEnabled = ref(true)
 const newName = ref('')
 const newDescription = ref('')
 
+const currentBoardDescription = useState<string | null>('currentBoardDescription')
+
 watch(() => board.value, (newBoard) => {
   if (newBoard) {
     currentBoardName.value = newBoard.name
+    currentBoardDescription.value = newBoard.description
     newName.value = newBoard.name
     newDescription.value = newBoard.description || ''
     const enabledFunctions = (newBoard.mcpEnabledFunctions as Record<string, boolean>) || {}
@@ -71,30 +75,21 @@ async function toggleMcpFunction(fn: string) {
   }
 }
 
-async function updateBoardName() {
+async function updateBoardInfo() {
   if (!board.value || board.value.role !== 'owner' || !newName.value) return
   try {
     const updated = await $fetch<Board & { role: string }>(`/api/boards/${boardId}`, {
       method: 'PATCH',
-      body: { name: newName.value.trim() }
+      body: { 
+        name: newName.value.trim(),
+        description: newDescription.value.trim()
+      }
     })
     board.value.name = updated.name
     currentBoardName.value = updated.name
-  } catch (e: any) {
-    alert(e.data?.message || 'Failed to rename board')
-  }
-}
-
-async function updateBoardDescription() {
-  if (!board.value || board.value.role !== 'owner') return
-  try {
-    const updated = await $fetch<Board & { role: string }>(`/api/boards/${boardId}`, {
-      method: 'PATCH',
-      body: { description: newDescription.value.trim() }
-    })
     board.value.description = updated.description
   } catch (e: any) {
-    alert(e.data?.message || 'Failed to update board description')
+    alert(e.data?.message || 'Failed to update board information')
   }
 }
 
@@ -208,54 +203,65 @@ onUnmounted(() => stopSocket())
 </script>
 
 <template>
-  <main v-if="board" class="p-6 md:p-8 max-w-[1600px] mx-auto">
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
-      <div class="space-y-1">
+  <main v-if="board" class="w-full min-h-screen flex flex-col px-6">
+    <div class="flex-1 flex flex-col w-full max-w-[1600px] mx-auto">
+      <Teleport to="#board-actions-teleport">
         <div class="flex items-center gap-3">
-          <h2 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{{ board.name }}</h2>
-          <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-gray-100 dark:bg-surface-raised text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-surface-border">{{ board.role }}</span>
-        </div>
-        <p v-if="board.description" class="text-sm font-medium text-gray-500 dark:text-gray-400 max-w-2xl">{{ board.description }}</p>
-      </div>
-      <div class="flex items-center gap-3">
-        <div class="flex bg-gray-100 dark:bg-surface-raised p-1 rounded-xl border border-gray-200 dark:border-surface-border">
+          <div class="flex bg-gray-100 dark:bg-surface-raised p-1 rounded-xl border border-gray-200 dark:border-surface-border">
+            <button
+              @click="viewMode = 'board'"
+              class="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg transition-all"
+              :class="viewMode === 'board' ? 'bg-white dark:bg-surface-card text-gray-900 dark:text-white shadow-md shadow-black/5 dark:shadow-neon-cyan/5' : ''"
+              title="Board view"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <button
+              @click="viewMode = 'list'"
+              class="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg transition-all"
+              :class="viewMode === 'list' ? 'bg-white dark:bg-surface-card text-gray-900 dark:text-white shadow-md shadow-black/5 dark:shadow-neon-cyan/5' : ''"
+              title="List view"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
           <button
-            @click="viewMode = 'board'"
-            class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all"
-            :class="viewMode === 'board' ? 'bg-white dark:bg-surface-card text-gray-900 dark:text-white shadow-md shadow-black/5 dark:shadow-neon-cyan/5' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+            @click="showArchive = !showArchive"
+            class="p-2.5 rounded-xl border border-gray-200 dark:border-surface-border transition-all active:scale-95 shadow-sm"
+            :class="showArchive ? 'bg-gray-200 dark:bg-surface-hover text-gray-900 dark:text-white' : 'bg-white dark:bg-surface-card text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-surface-raised'"
+            :title="showArchive ? 'Hide Archive' : 'View Archive'"
           >
-            Board
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
           </button>
           <button
-            @click="viewMode = 'list'"
-            class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all"
-            :class="viewMode === 'list' ? 'bg-white dark:bg-surface-card text-gray-900 dark:text-white shadow-md shadow-black/5 dark:shadow-neon-cyan/5' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+            @click="showSettings = !showSettings"
+            class="p-2.5 text-gray-600 dark:text-gray-300 bg-white dark:bg-surface-card border border-gray-200 dark:border-surface-border rounded-xl hover:bg-gray-50 dark:hover:bg-surface-raised transition-all active:scale-95 shadow-sm"
+            :class="{ 'ring-2 ring-neon-cyan/30 border-neon-cyan/50': showSettings }"
+            title="Settings"
           >
-            List
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+          <button
+            @click="showCreateForm = true"
+            class="flex items-center gap-2 px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest bg-neon-cyan text-cyan-950 dark:text-gray-900 rounded-xl hover:bg-neon-cyan/90 transition-all hover:shadow-lg hover:shadow-neon-cyan/20 active:scale-95"
+            title="Create new task"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            New Task
           </button>
         </div>
-        <button
-          @click="showArchive = !showArchive"
-          class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest rounded-xl border border-gray-200 dark:border-surface-border transition-all active:scale-95 shadow-sm"
-          :class="showArchive ? 'bg-gray-200 dark:bg-surface-hover text-gray-900 dark:text-white' : 'bg-white dark:bg-surface-card text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-surface-raised'"
-        >
-          {{ showArchive ? 'Hide Archive' : 'View Archive' }}
-        </button>
-        <button
-          @click="showSettings = !showSettings"
-          class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 bg-white dark:bg-surface-card border border-gray-200 dark:border-surface-border rounded-xl hover:bg-gray-50 dark:hover:bg-surface-raised transition-all active:scale-95 shadow-sm"
-          :class="{ 'ring-2 ring-neon-cyan/30 border-neon-cyan/50': showSettings }"
-        >
-          ⚙️ Settings
-        </button>
-        <button
-          @click="showCreateForm = true"
-          class="px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest bg-neon-cyan text-cyan-950 dark:text-gray-900 rounded-xl hover:bg-neon-cyan/90 transition-all hover:shadow-lg hover:shadow-neon-cyan/20 active:scale-95"
-        >
-          + New Task
-        </button>
-      </div>
-    </div>
+      </Teleport>
 
     <!-- Delete Board Modal -->
     <DeleteBoardModal
@@ -272,6 +278,7 @@ onUnmounted(() => stopSocket())
       :mcp-token="mcpToken"
       :is-public="board.mcpPublic"
       @close="showHelpModal = false"
+      @open-agents="showAgentsMarkdown = true"
     />
 
     <AgentsMarkdownModal
@@ -306,48 +313,66 @@ onUnmounted(() => stopSocket())
         </div>
 
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Tabs -->
+        <div class="flex items-center gap-6 mb-6 border-b border-gray-200 dark:border-surface-border">
+          <button
+            @click="activeTab = 'general'"
+            class="pb-2 text-xs font-bold uppercase tracking-widest transition-colors"
+            :class="activeTab === 'general' ? 'text-neon-cyan border-b-2 border-neon-cyan' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white'"
+          >
+            General
+          </button>
+          <button
+            @click="activeTab = 'mcp'"
+            class="pb-2 text-xs font-bold uppercase tracking-widest transition-colors"
+            :class="activeTab === 'mcp' ? 'text-neon-cyan border-b-2 border-neon-cyan' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white'"
+          >
+            MCP
+          </button>
+        </div>
+
+        <div v-show="activeTab === 'general'" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div class="space-y-6">
             <!-- General Board Settings -->
-            <div v-if="board.role === 'owner'" class="space-y-3">
-              <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block ml-1">Board Name</label>
-              <div class="flex gap-2">
+            <div v-if="board.role === 'owner'" class="space-y-4">
+              <div class="space-y-3">
+                <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block ml-1">Board Name</label>
                 <input
                   v-model="newName"
                   type="text"
-                  class="flex-1 bg-gray-50 dark:bg-surface-dark/50 border border-gray-200 dark:border-surface-border rounded-xl px-4 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50 transition-all"
+                  class="w-full bg-gray-50 dark:bg-surface-dark/50 border border-gray-200 dark:border-surface-border rounded-xl px-4 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50 transition-all"
                   placeholder="Board Name"
                 />
-                <button
-                  @click="updateBoardName"
-                  :disabled="!newName || newName === board.name"
-                  class="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 transition-all disabled:opacity-50 shadow-sm active:scale-95"
-                >
-                  Save
-                </button>
               </div>
-            </div>
 
-            <div v-if="board.role === 'owner'" class="space-y-3">
-              <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block ml-1">Board Description</label>
-              <div class="flex gap-2">
+              <div class="space-y-3">
+                <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block ml-1">Board Description</label>
                 <textarea
                   v-model="newDescription"
-                  class="flex-1 bg-gray-50 dark:bg-surface-dark/50 border border-gray-200 dark:border-surface-border rounded-xl px-4 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50 transition-all"
+                  class="w-full bg-gray-50 dark:bg-surface-dark/50 border border-gray-200 dark:border-surface-border rounded-xl px-4 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50 transition-all"
                   placeholder="Board Description"
                   rows="3"
                 />
-                <button
-                  @click="updateBoardDescription"
-                  :disabled="newDescription === (board.description || '')"
-                  class="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 transition-all disabled:opacity-50 shadow-sm active:scale-95"
-                >
-                  Save
-                </button>
               </div>
-            </div>
 
-            <!-- MCP Bearer Token -->
+              <button
+                @click="updateBoardInfo"
+                :disabled="!newName || (newName === board.name && newDescription === (board.description || ''))"
+                class="w-full text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 transition-all disabled:opacity-50 shadow-sm active:scale-95"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <BoardMembers :board-id="boardId" :is-owner="board.role === 'owner'" />
+          </div>
+        </div>
+
+        <div v-show="activeTab === 'mcp'" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="space-y-6">
+            <!-- MCP Bearer Token, Privacy, Functions -->
             <div v-if="board.role === 'owner'" class="space-y-3">
               <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 block ml-1">MCP Bearer Token</label>
               <div v-if="mcpToken" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -445,63 +470,49 @@ onUnmounted(() => stopSocket())
                 </div>
               </div>
             </div>
-
-            <!-- Export Board -->
-            <!-- <div class="bg-gray-50 dark:bg-surface-raised/30 rounded-xl p-4 border border-gray-100 dark:border-surface-border/50">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h4 class="text-xs font-bold uppercase tracking-widest text-gray-900 dark:text-white mb-1">Export Board</h4>
-                  <p class="text-[10px] text-gray-500 dark:text-gray-400">Export this board and all its tasks as JSON.</p>
-                </div>
+          </div>
+          <div class="space-y-6">
+             <!-- MCP Project Setup -->
+            <div class="space-y-4">
+              <div class="space-y-2 ml-1">
+                <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300">Project Integration</label>
+                <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Copy <code class="font-mono bg-gray-100 dark:bg-surface-raised px-1 py-0.5 rounded">AGENTS.md</code> to your project root to enable task discovery and MCP integration.
+                </p>
                 <button
-                  @click="exportBoard"
-                  class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-200 transition-all active:scale-95"
+                  @click="showAgentsMarkdown = true"
+                  class="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all shadow-sm bg-neon-purple/10 text-neon-purple border border-neon-purple/20 hover:bg-neon-purple/20"
                 >
-                  Export
+                  📄 View AGENTS.md
                 </button>
               </div>
-            </div> -->
 
-
-            <BoardMembers :board-id="boardId" :is-owner="board.role === 'owner'" />
-          </div>
-
-          <div class="space-y-6">
-            <!-- MCP Config Snippet -->
-            <div class="space-y-3">
-              <div class="flex items-center justify-between ml-1">
-                <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300">MCP Client Configuration</label>
-                <div class="flex gap-2">
-                  <button
-                    @click="showAgentsMarkdown = true"
-                    class="text-[9px] font-black uppercase tracking-tighter px-2 py-1 rounded-md transition-all shadow-sm bg-neon-purple/10 text-neon-purple border border-neon-purple/20 hover:bg-neon-purple/20"
-                    title="Show example AGENTS.md for your project"
-                  >
-                    📄 AGENTS.md
-                  </button>
-                  <button
-                    @click="showMcpConfig = !showMcpConfig"
-                    class="text-[9px] font-black uppercase tracking-tighter px-2 py-1 rounded-md transition-all shadow-sm bg-gray-100 dark:bg-surface-raised text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                  >
-                    {{ showMcpConfig ? 'Hide' : 'Show' }}
-                  </button>
-                  <button
-                    @click="copyMcpConfig"
-                    class="text-[9px] font-black uppercase tracking-tighter px-2 py-1 rounded-md transition-all shadow-sm"
-                    :class="mcpConfigCopied
-                      ? 'bg-neon-green text-gray-900 shadow-neon-green/20'
-                      : 'bg-gray-100 dark:bg-surface-raised text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
-                  >
-                    {{ mcpConfigCopied ? '✓ Copied' : '📋 Copy JSON' }}
-                  </button>
+              <!-- MCP Config Snippet -->
+              <div class="space-y-3">
+                <div class="flex items-center justify-between ml-1 cursor-pointer" @click="showMcpConfig = !showMcpConfig">
+                  <div class="flex items-center gap-2">
+                    <span class="text-gray-400">{{ showMcpConfig ? '▼' : '▶' }}</span>
+                    <label class="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300">MCP Client Configuration</label>
+                  </div>
+                  <div class="flex gap-2" @click.stop>
+                    <button
+                      @click="copyMcpConfig"
+                      class="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl transition-all shadow-sm"
+                      :class="mcpConfigCopied
+                        ? 'bg-neon-green text-gray-900 shadow-neon-green/20'
+                        : 'bg-gray-100 dark:bg-surface-raised text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
+                    >
+                      {{ mcpConfigCopied ? '✓ Copied' : '📋 Copy JSON' }}
+                    </button>
+                  </div>
+                </div>
+                <div v-if="showMcpConfig" class="relative group">
+                  <pre class="bg-gray-900 dark:bg-surface-dark/80 text-neon-green text-[11px] rounded-xl p-5 overflow-x-auto border border-transparent dark:border-surface-border shadow-inner dark:shadow-black transition-all hover:border-neon-green/30"><code>{{ mcpConfig }}</code></pre>
+                  <div class="absolute inset-0 bg-neon-green/5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity rounded-xl"></div>
+                  <p class="text-[10px] font-medium text-gray-400 dark:text-gray-500 leading-relaxed ml-1 mt-2">Add this to your MCP client configuration (e.g. Claude Code, Cursor, VS Code).</p>
                 </div>
               </div>
-              <div v-if="showMcpConfig" class="relative group">
-                <pre class="bg-gray-900 dark:bg-surface-dark/80 text-neon-green text-[11px] rounded-xl p-5 overflow-x-auto border border-transparent dark:border-surface-border shadow-inner dark:shadow-black transition-all hover:border-neon-green/30"><code>{{ mcpConfig }}</code></pre>
-                <div class="absolute inset-0 bg-neon-green/5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity rounded-xl"></div>
-              </div>
-              <p v-if="showMcpConfig" class="text-[10px] font-medium text-gray-400 dark:text-gray-500 leading-relaxed ml-1">Add this to your MCP client configuration (e.g. Claude Code, Cursor, VS Code).</p>
-            </div>
+          </div>
 
             <BoardInstructions :board-id="boardId" :is-owner="board.role === 'owner'" />
           </div>
@@ -529,7 +540,7 @@ onUnmounted(() => stopSocket())
 
     <div class="relative min-h-[60vh]">
       <KanbanBoard v-if="viewMode === 'board'" :board-id="boardId" :show-archive="showArchive" @task-click="selectedTask = $event" />
-      <TaskListView v-else :board-id="boardId" @task-click="selectedTask = $event" />
+      <TaskListView v-else :board-id="boardId" :show-archive="showArchive" @task-click="selectedTask = $event" />
     </div>
 
     <transition
@@ -549,5 +560,6 @@ onUnmounted(() => stopSocket())
     >
       <TaskDetailModal v-if="selectedTask" :task="selectedTask" :board-id="boardId" @close="selectedTask = null" @open-task="selectedTask = $event" />
     </transition>
+    </div>
   </main>
 </template>

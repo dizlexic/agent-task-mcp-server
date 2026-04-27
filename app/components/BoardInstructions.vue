@@ -8,6 +8,7 @@ interface InstructionWithSource {
   content: string
   isDefault: boolean
   source: 'board' | 'global'
+  collapsed: boolean
 }
 
 const instrList = ref<InstructionWithSource[]>([])
@@ -20,7 +21,8 @@ const typeLabels: Record<string, string> = {
 }
 
 async function fetchInstructions() {
-  instrList.value = await $fetch<InstructionWithSource[]>(`/api/boards/${props.boardId}/instructions`)
+  const data = await $fetch<InstructionWithSource[]>(`/api/boards/${props.boardId}/instructions`)
+  instrList.value = data.map(instr => ({ ...instr, collapsed: true }))
   for (const instr of instrList.value) {
     editContent.value[instr.id] = instr.content
   }
@@ -61,15 +63,18 @@ onMounted(() => fetchInstructions())
     </div>
 
     <div v-for="instr in instrList" :key="instr.id" class="bg-gray-50 dark:bg-surface-raised/30 rounded-2xl p-5 border border-gray-100 dark:border-surface-border/50 space-y-4 transition-all">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold text-gray-900 dark:text-white">{{ typeLabels[instr.type] || instr.type }}</span>
+      <div class="flex items-center justify-between cursor-pointer" @click="instr.collapsed = !instr.collapsed">
         <div class="flex items-center gap-2">
+           <span class="text-gray-400">{{ instr.collapsed ? '▶' : '▼' }}</span>
+           <span class="text-xs font-bold text-gray-900 dark:text-white">{{ typeLabels[instr.type] || instr.type }}</span>
+        </div>
+        <div class="flex items-center gap-2" @click.stop>
           <span v-if="instr.source === 'global'" class="text-[9px] font-black uppercase tracking-widest bg-gray-100 dark:bg-surface-dark/50 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded border border-gray-200 dark:border-surface-border">Using Global</span>
           <span v-else-if="instr.isDefault" class="text-[9px] font-black uppercase tracking-widest bg-neon-green/10 text-green-600 dark:text-neon-green px-2 py-0.5 rounded border border-neon-green/20">Default</span>
           <span v-else class="text-[9px] font-black uppercase tracking-widest bg-neon-orange/10 text-orange-600 dark:text-neon-orange px-2 py-0.5 rounded border border-neon-orange/20">Board Override</span>
         </div>
       </div>
-      <div class="relative group">
+      <div v-if="!instr.collapsed" class="relative group">
         <textarea
           v-model="editContent[instr.id]"
           rows="6"
@@ -78,7 +83,7 @@ onMounted(() => fetchInstructions())
           placeholder="Enter custom instructions..."
         />
       </div>
-      <div v-if="isOwner" class="flex justify-end gap-3 pt-1">
+      <div v-if="!instr.collapsed && isOwner" class="flex justify-end gap-3 pt-1">
         <button
           v-if="instr.source === 'board'"
           @click="reset(instr)"

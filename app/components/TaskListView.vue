@@ -2,8 +2,12 @@
 import type { Task } from '../../server/db/schema'
 import { COLUMNS, COLUMN_COLORS } from '../utils/task-constants'
 
-const props = defineProps<{ boardId: string }>()
+const props = defineProps<{ boardId: string, showArchive: boolean }>()
 const { tasksByStatus } = useTasks(props.boardId)
+
+const columns = computed(() => {
+  return props.showArchive ? [...COLUMNS, { title: 'Archive', status: 'archive' }] : COLUMNS
+})
 
 const emit = defineEmits<{ taskClick: [task: Task] }>()
 
@@ -21,7 +25,7 @@ function isCollapsed(status: string) {
 <template>
   <div class="space-y-4">
     <div
-      v-for="col in COLUMNS"
+      v-for="col in columns"
       :key="col.status"
       class="bg-white dark:bg-surface-card rounded-2xl border border-gray-100 dark:border-surface-border/50 overflow-hidden shadow-sm transition-all"
     >

@@ -52,7 +52,7 @@ const markdown = computed(() => {
     })
   }
 
-  const tokenPlaceholder = props.mcpToken || '<your-bearer-token>'
+  const tokenPlaceholder = '<your-bearer-token>'
 
   return `# AGENTS.md
 

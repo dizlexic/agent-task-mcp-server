@@ -5,6 +5,20 @@ import { COLUMNS } from '../utils/task-constants'
 
 const props = defineProps<{ boardId: string, showArchive: boolean }>()
 const { tasksByStatus, moveTask } = useTasks(props.boardId)
+const boardContainer = ref<HTMLElement | null>(null)
+
+watch(() => props.showArchive, (newValue) => {
+  if (newValue) {
+    nextTick(() => {
+      if (boardContainer.value) {
+        boardContainer.value.scrollTo({
+          left: boardContainer.value.scrollWidth,
+          behavior: 'smooth'
+        })
+      }
+    })
+  }
+})
 
 const columns = computed(() => {
   return props.showArchive ? [...COLUMNS, { title: 'Archive', status: 'archive' }] : COLUMNS
@@ -18,7 +32,7 @@ async function onTaskMoved(taskId: string, newStatus: string, newIndex: number) 
 </script>
 
 <template>
-  <div class="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none">
+  <div ref="boardContainer" class="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none">
     <KanbanColumn
       v-for="col in columns"
       :key="col.status"

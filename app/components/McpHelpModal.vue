@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const props = defineProps<{ boardId: string; mcpToken: string | null; isPublic: boolean }>()
-const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{ close: [], 'open-agents': [] }>()
 
 const origin = ref('')
 const copied = ref(false)
@@ -10,9 +10,7 @@ onMounted(() => {
 })
 
 const mcpUrl = computed(() => {
-  const url = `${origin.value}/api/boards/${props.boardId}/mcp`
-  if (props.isPublic) return url
-  return `${url}?token=${props.mcpToken || '<YOUR_TOKEN>'}`
+  return `${origin.value}/api/boards/${props.boardId}/mcp`
 })
 
 const copyToClipboard = async (text: string) => {
@@ -24,14 +22,22 @@ const copyToClipboard = async (text: string) => {
 }
 
 const configSnippet = computed(() => {
-  return JSON.stringify({
+  const config: any = {
     mcpServers: {
       "moo-tasks": {
         type: "streamable-http",
         url: mcpUrl.value
       }
     }
-  }, null, 2)
+  }
+
+  if (!props.isPublic) {
+    config.mcpServers["moo-tasks"].headers = {
+      Authorization: `Bearer <your-bearer-token>`
+    }
+  }
+
+  return JSON.stringify(config, null, 2)
 })
 </script>
 
@@ -61,6 +67,23 @@ const configSnippet = computed(() => {
           <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
             Moo Tasks is an <strong class="text-gray-900 dark:text-white">MCP Server</strong> (Model Context Protocol). It allows AI agents like Claude, Cursor, and VS Code to interact directly with this board to manage tasks, read instructions, and follow workflows.
           </p>
+        </section>
+
+        <!-- AGENTS.md -->
+        <section class="space-y-4">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-1 h-4 bg-neon-cyan rounded-full"></div>
+            <h4 class="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Project Integration</h4>
+          </div>
+          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            Copy <code class="font-mono bg-gray-100 dark:bg-surface-raised px-1 py-0.5 rounded">AGENTS.md</code> to your project root to enable task discovery and MCP integration.
+          </p>
+          <button
+            @click="emit('open-agents')"
+            class="text-[10px] font-bold uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all shadow-sm bg-neon-purple/10 text-neon-purple border border-neon-purple/20 hover:bg-neon-purple/20"
+          >
+            📄 View AGENTS.md
+          </button>
         </section>
 
         <!-- Board Scoped -->
