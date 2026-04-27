@@ -5,6 +5,7 @@ export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
 
 export function useTasks(boardId: string) {
   const tasks = useState<Task[]>(`tasks-${boardId}`, () => [])
+  const taskTags = useState<any[]>(`task-tags-${boardId}`, () => [])
   const loading = useState(`tasks-loading-${boardId}`, () => false)
 
   const { connect, getSocket } = useSocket()
@@ -16,6 +17,10 @@ export function useTasks(boardId: string) {
     } finally {
       loading.value = false
     }
+  }
+
+  async function fetchTaskTags() {
+    taskTags.value = await $fetch<any[]>(`/api/boards/${boardId}/task-tags`)
   }
 
   function tasksByStatus(status: TaskStatus): Task[] {
@@ -105,5 +110,5 @@ export function useTasks(boardId: string) {
     socket.off('task:deleted')
   }
 
-  return { tasks, loading, fetchTasks, tasksByStatus, createTask, updateTask, deleteTask, addComment, fetchComments, moveTask, startSocket, stopSocket }
+  return { tasks, taskTags, loading, fetchTasks, fetchTaskTags, tasksByStatus, createTask, updateTask, deleteTask, addComment, fetchComments, moveTask, startSocket, stopSocket }
 }

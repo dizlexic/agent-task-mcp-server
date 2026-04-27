@@ -75,6 +75,21 @@ export const invitations = mysqlTable('invitations', {
   primaryKey({ columns: [table.boardId, table.email] }),
 ])
 
+export const tags = mysqlTable('tags', {
+  id: varchar('id', { length: 191 }).primaryKey(),
+  boardId: varchar('board_id', { length: 191 }).notNull().references(() => boards.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  color: varchar('color', { length: 255 }).notNull(),
+  icon: varchar('icon', { length: 255 }).notNull(),
+})
+
+export const taskTags = mysqlTable('task_tags', {
+  taskId: varchar('task_id', { length: 191 }).notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+  tagId: varchar('tag_id', { length: 191 }).notNull().references(() => tags.id, { onDelete: 'cascade' }),
+}, (table) => [
+  primaryKey({ columns: [table.taskId, table.tagId] }),
+])
+
 export const emailVerificationTokens = mysqlTable('email_verification_tokens', {
   id: varchar('id', { length: 191 }).primaryKey(),
   userId: varchar('user_id', { length: 191 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -102,3 +117,7 @@ export type Comment = typeof comments.$inferSelect
 export type NewComment = typeof comments.$inferInsert
 export type Invitation = typeof invitations.$inferSelect
 export type NewInvitation = typeof invitations.$inferInsert
+export type Tag = typeof tags.$inferSelect
+export type NewTag = typeof tags.$inferInsert
+export type TaskTag = typeof taskTags.$inferSelect
+export type NewTaskTag = typeof taskTags.$inferInsert

@@ -5,7 +5,7 @@ const { loggedIn, user, clear } = useUserSession()
 const { public: { siteName } } = useRuntimeConfig()
 
 useHead({
-  title: computed(() => currentBoardName.value ? `${currentBoardName.value} | ${siteName}` : siteName)
+  title: computed(() => currentBoardName.value || siteName)
 })
 
 const isDark = ref(false)
@@ -67,7 +67,7 @@ async function logout() {
         aria-label="Go to dashboard"
       >
         <span class="text-2xl group-hover:scale-110 transition-transform shrink-0" aria-hidden="true">🐄</span>
-        <span class="tracking-tight truncate">{{ currentBoardName || siteName }}</span>
+        <span class="tracking-tight truncate max-w-xs">{{ currentBoardName || siteName }}</span>
       </NuxtLink>
       <div class="flex items-center gap-6">
         <nav class="hidden md:flex items-center gap-6" aria-label="Main navigation">
