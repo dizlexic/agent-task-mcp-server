@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="MooTasksFlow.gif" alt="Moo Tasks Workflow" width="700" />
+  <img src="https://raw.githubusercontent.com/dizlexic/moo-tasks/refs/heads/main/public/MooTasksFlow.gif" alt="Moo Tasks Workflow" width="700" />
 </p>
 
 <p align="center">
@@ -44,6 +44,21 @@
 | 🔗 | **Task Deep-Linking** | Copy unique task URLs for direct navigation and easy sharing |
 | ⚡ | **Real-time Polling** | Automatic board sync to keep human and AI agent actions in sync |
 | 🗄️ | **MySQL Persistence** | Reliable data storage with Drizzle ORM |
+
+## Screenshots
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dizlexic/moo-tasks/refs/heads/main/public/Task Board.png" alt="Moo Tasks Workflow" width="700" />
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dizlexic/moo-tasks/refs/heads/main/public/MCP Server Guide.png" alt="Moo Tasks Workflow" width="700" />
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dizlexic/moo-tasks/refs/heads/main/public/Comments.png" alt="Moo Tasks Workflow" width="700" />
+</p>
+
 
 ---
 

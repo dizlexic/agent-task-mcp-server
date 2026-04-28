@@ -31,6 +31,7 @@ useHead({ title: 'FAQ' })
         </p>
         <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-2 ml-2">
           <li>"List all high priority tasks on the board."</li>
+          <li>"Continue working on the board."</li>
           <li>"Accept the critical task with ID #123 and start working on it."</li>
           <li>"Post a comment on task #123 explaining that I've completed the implementation."</li>
           <li>"Submit task #123 for review."</li>
