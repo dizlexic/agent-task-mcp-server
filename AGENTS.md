@@ -202,8 +202,18 @@ migration, follow these patterns:
 
 If `db:migrate` fails with `ER_DUP_FIELDNAME` (or similar) it usually means
 the DB already has a change that Drizzle thinks is pending — the
-`__drizzle_migrations` table is out of sync with `drizzle/`. To recover:
+`__drizzle_migrations` table is out of sync with `drizzle/`.
 
+**For a fresh start in Docker:**
+If you are seeing errors about "Duplicate column" or "Table already exists" during the initial setup, it's often because a previous failed attempt left the database in a partially initialized state. Run the following command to start from a clean slate:
+
+```bash
+docker compose down -v && docker compose up --build
+```
+
+The `-v` flag is critical as it removes the persistent database volume.
+
+**Manual recovery:**
 1. Confirm the column/table actually exists in the DB.
 2. Verify the migration file content matches `drizzle/meta/_journal.json`
    (don't edit the SQL after the fact).

@@ -3,39 +3,39 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: build
-    command: sh -c "npm run db:migrate && npx nuxt dev --host 0.0.0.0"
     ports:
       - "${PORT:-3000}:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
+    networks:
+      - moo-network
     env_file:
       - .env
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
+      - NODE_ENV=${NODE_ENV:-production}
       - HOST=0.0.0.0
-      - DB_HOST=db
+      - DB_HOST=${DB_HOST:-db}
       - DB_PORT=3306
       - DB_SSL=
-      - DB_USER=mootasks
-      - DB_PASSWORD=password
-      - DB_NAME=mootasks
+      - DB_USER=${DB_USER:-mootasks}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-mootasks}
+      - DATABASE_URL=mysql://${DB_USER:-mootasks}:${DB_PASSWORD:-password}@${DB_HOST:-db}:3306/${DB_NAME:-mootasks}
     depends_on:
       db:
         condition: service_healthy
+    restart: always
 
   db:
     image: mysql:8.0
     container_name: db
-    command: --authentication-policy=mysql_native_password --host-cache-size=0
+    command: --default-authentication-plugin=mysql_native_password --host-cache-size=0
     ports:
       - "${DB_LOCAL_PORT:-3307}:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=password
-      - MYSQL_USER=mootasks
-      - MYSQL_PASSWORD=password
-      - MYSQL_DATABASE=mootasks
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-password}
+      - MYSQL_USER=${DB_USER:-mootasks}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-password}
+      - MYSQL_DATABASE=${DB_NAME:-mootasks}
+      - MYSQL_TCP_PORT=3306
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-password}"]
       interval: 10s

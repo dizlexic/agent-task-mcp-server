@@ -71,9 +71,7 @@ export const invitations = mysqlTable('invitations', {
   email: varchar('email', { length: 191 }).notNull(),
   inviterId: varchar('inviter_id', { length: 191 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at').notNull(),
-}, (table) => [
-  primaryKey({ columns: [table.boardId, table.email] }),
-])
+})
 
 export const tags = mysqlTable('tags', {
   id: varchar('id', { length: 191 }).primaryKey(),

@@ -13,7 +13,7 @@
     "db:seed": "tsx server/db/seed.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {
     "@nuxtjs/mcp-toolkit": "^0.13.4",
@@ -30,10 +30,11 @@
     "vue": "^3.5.32",
     "vue-router": "^5.0.4",
     "vuedraggable": "^4.1.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.19.3"
   },
   "devDependencies": {
-    "@types/nodemailer": "^8.0.0",
-    "drizzle-kit": "^0.18.1"
+    "@types/nodemailer": "^8.0.0"
   }
 }

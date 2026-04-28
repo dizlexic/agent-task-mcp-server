@@ -24,6 +24,9 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/drizzle.config.ts .
 COPY --from=build /app/scripts ./scripts
+COPY --from=build /app/server ./server
+COPY --from=build /app/tsconfig.json .
+RUN chmod +x /app/scripts/start.sh
 
 EXPOSE 3000
 

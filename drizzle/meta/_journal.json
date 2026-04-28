@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1777049412594,
-      "tag": "0000_careless_captain_britain",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1777049412600,
-      "tag": "0001_add_mcp_enabled_functions",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1777049412605,
-      "tag": "0002_add_order_to_tasks",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1777141492087,
-      "tag": "0003_violet_wind_dancer",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1777276374267,
-      "tag": "0004_lyrical_mac_gargan",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "5",
-      "when": 1777277980078,
-      "tag": "0005_clever_lester",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "5",
-      "when": 1777279638333,
-      "tag": "0006_orange_swordsman",
+      "when": 1777364285079,
+      "tag": "0000_burly_captain_cross",
       "breakpoints": true
     }
   ]
