@@ -6,8 +6,8 @@ echo "Checking database connection..."
 node -e "
 const net = require('net');
 const check = () => {
-  const client = net.createConnection({ host: process.env.DB_HOST || 'db', port: 3306 }, () => {
-    console.log('Database port 3306 is open');
+  const client = net.createConnection({ host: process.env.DB_HOST || 'db', port: process.env.DB_PORT || 3306 }, () => {
+    console.log('Database port is open');
     client.end();
     process.exit(0);
   });
