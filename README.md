@@ -75,19 +75,23 @@ The fastest way to get started with Moo Tasks is using Docker.
 
 ### 🐳 Running with Docker (Recommended)
 
-If you have Docker installed, you can start the entire stack (including the database, Adminer, and Mailpit) with one command:
+If you have Docker installed, you can start the entire stack (including the database, Adminer, and Mailpit) with one command. First create a `.env` file from `.env.example` and set `NUXT_SESSION_PASSWORD` (at least 32 characters long). Then run:
 
 ```bash
 docker-compose up -d
 ```
-
+or
+```bash
+docker compose up -d
+```
 The application will be available at `http://localhost:3000`.
+
 
 ### 🛠️ Manual Development Setup
 
 If you prefer to run locally without Docker:
 
-1.  **Prerequisites**: Ensure you have [Node.js](https://nodejs.org/) (v22+) and [npm](https://www.npmjs.com/) installed.
+1.  **Prerequisites**: Ensure you have [Mysql 8](https://dev.mysql.com/doc/relnotes/mysql/8.0/en/), [Node.js](https://nodejs.org/) (v22+) and [npm](https://www.npmjs.com/) installed.
 2.  **Install dependencies**: `npm install`
 3.  **Environment Variables**: Create a `.env` file from `.env.example` and set `NUXT_SESSION_PASSWORD` (at least 32 characters long).
 4.  **Start development server**: `npm run dev`
