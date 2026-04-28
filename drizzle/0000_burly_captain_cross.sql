@@ -108,18 +108,40 @@ CREATE TABLE IF NOT EXISTS `users` (
 	CONSTRAINT `users_email_unique` UNIQUE(`email`)
 );
 --> statement-breakpoint
-ALTER TABLE `board_members` ADD CONSTRAINT `board_members_board_id_boards_id_fk` FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `board_members` ADD CONSTRAINT `board_members_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `boards` ADD CONSTRAINT `boards_owner_id_users_id_fk` FOREIGN KEY (`owner_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `comments` ADD CONSTRAINT `comments_task_id_tasks_id_fk` FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `comments` ADD CONSTRAINT `comments_board_id_boards_id_fk` FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `email_verification_tokens` ADD CONSTRAINT `email_verification_tokens_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `instructions` ADD CONSTRAINT `instructions_board_id_boards_id_fk` FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `instructions` ADD CONSTRAINT `instructions_updated_by_users_id_fk` FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `invitations` ADD CONSTRAINT `invitations_board_id_boards_id_fk` FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `invitations` ADD CONSTRAINT `invitations_inviter_id_users_id_fk` FOREIGN KEY (`inviter_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `password_reset_tokens` ADD CONSTRAINT `password_reset_tokens_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `tags` ADD CONSTRAINT `tags_board_id_boards_id_fk` FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `task_tags` ADD CONSTRAINT `task_tags_task_id_tasks_id_fk` FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `task_tags` ADD CONSTRAINT `task_tags_tag_id_tags_id_fk` FOREIGN KEY (`tag_id`) REFERENCES `tags`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `tasks` ADD CONSTRAINT `tasks_board_id_boards_id_fk` FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action;
+DROP PROCEDURE IF EXISTS AddConstraintIfNotExists;--> statement-breakpoint
+CREATE PROCEDURE AddConstraintIfNotExists(
+	IN tableName VARCHAR(255),
+	IN constraintName VARCHAR(255),
+	IN constraintDef TEXT
+)
+BEGIN
+	DECLARE count INT;
+	SELECT COUNT(*) INTO count
+	FROM information_schema.TABLE_CONSTRAINTS
+	WHERE TABLE_SCHEMA = DATABASE()
+	AND TABLE_NAME = tableName
+	AND CONSTRAINT_NAME = constraintName;
+
+	IF count = 0 THEN
+		SET @sqlStmt = CONCAT('ALTER TABLE `', tableName, '` ADD CONSTRAINT `', constraintName, '` ', constraintDef);
+		PREPARE stmt FROM @sqlStmt;
+		EXECUTE stmt;
+		DEALLOCATE PREPARE stmt;
+	END IF;
+END;--> statement-breakpoint
+CALL AddConstraintIfNotExists('board_members', 'board_members_board_id_boards_id_fk', 'FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('board_members', 'board_members_user_id_users_id_fk', 'FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('boards', 'boards_owner_id_users_id_fk', 'FOREIGN KEY (`owner_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('comments', 'comments_task_id_tasks_id_fk', 'FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('comments', 'comments_board_id_boards_id_fk', 'FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('email_verification_tokens', 'email_verification_tokens_user_id_users_id_fk', 'FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('instructions', 'instructions_board_id_boards_id_fk', 'FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('instructions', 'instructions_updated_by_users_id_fk', 'FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('invitations', 'invitations_board_id_boards_id_fk', 'FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('invitations', 'invitations_inviter_id_users_id_fk', 'FOREIGN KEY (`inviter_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('password_reset_tokens', 'password_reset_tokens_user_id_users_id_fk', 'FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('tags', 'tags_board_id_boards_id_fk', 'FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('task_tags', 'task_tags_task_id_tasks_id_fk', 'FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('task_tags', 'task_tags_tag_id_tags_id_fk', 'FOREIGN KEY (`tag_id`) REFERENCES `tags`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('tasks', 'tasks_board_id_boards_id_fk', 'FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+DROP PROCEDURE IF EXISTS AddConstraintIfNotExists;
