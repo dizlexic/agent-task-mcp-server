@@ -1,4 +1,4 @@
-CREATE TABLE `board_members` (
+CREATE TABLE IF NOT EXISTS `board_members` (
 	`board_id` varchar(191) NOT NULL,
 	`user_id` varchar(191) NOT NULL,
 	`role` enum('owner','member') NOT NULL DEFAULT 'member',
@@ -6,7 +6,7 @@ CREATE TABLE `board_members` (
 	CONSTRAINT `board_members_board_id_user_id_pk` PRIMARY KEY(`board_id`,`user_id`)
 );
 --> statement-breakpoint
-CREATE TABLE `boards` (
+CREATE TABLE IF NOT EXISTS `boards` (
 	`id` varchar(191) NOT NULL,
 	`name` varchar(255) NOT NULL,
 	`description` text,
@@ -19,7 +19,7 @@ CREATE TABLE `boards` (
 	CONSTRAINT `boards_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `comments` (
+CREATE TABLE IF NOT EXISTS `comments` (
 	`id` varchar(191) NOT NULL,
 	`task_id` varchar(191) NOT NULL,
 	`board_id` varchar(191) NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE `comments` (
 	CONSTRAINT `comments_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `email_verification_tokens` (
+CREATE TABLE IF NOT EXISTS `email_verification_tokens` (
 	`id` varchar(191) NOT NULL,
 	`user_id` varchar(191) NOT NULL,
 	`token` varchar(191) NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE `email_verification_tokens` (
 	CONSTRAINT `email_verification_tokens_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `instructions` (
+CREATE TABLE IF NOT EXISTS `instructions` (
 	`id` varchar(191) NOT NULL,
 	`board_id` varchar(191),
 	`type` enum('agent_instructions','task_workflow') NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE `instructions` (
 	CONSTRAINT `instructions_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `invitations` (
+CREATE TABLE IF NOT EXISTS `invitations` (
 	`id` varchar(191) NOT NULL,
 	`board_id` varchar(191) NOT NULL,
 	`email` varchar(191) NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE `invitations` (
 	CONSTRAINT `invitations_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `password_reset_tokens` (
+CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
 	`id` varchar(191) NOT NULL,
 	`user_id` varchar(191) NOT NULL,
 	`token` varchar(191) NOT NULL,
@@ -65,7 +65,7 @@ CREATE TABLE `password_reset_tokens` (
 	CONSTRAINT `password_reset_tokens_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `tags` (
+CREATE TABLE IF NOT EXISTS `tags` (
 	`id` varchar(191) NOT NULL,
 	`board_id` varchar(191) NOT NULL,
 	`name` varchar(255) NOT NULL,
@@ -74,13 +74,13 @@ CREATE TABLE `tags` (
 	CONSTRAINT `tags_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `task_tags` (
+CREATE TABLE IF NOT EXISTS `task_tags` (
 	`task_id` varchar(191) NOT NULL,
 	`tag_id` varchar(191) NOT NULL,
 	CONSTRAINT `task_tags_task_id_tag_id_pk` PRIMARY KEY(`task_id`,`tag_id`)
 );
 --> statement-breakpoint
-CREATE TABLE `tasks` (
+CREATE TABLE IF NOT EXISTS `tasks` (
 	`id` varchar(191) NOT NULL,
 	`board_id` varchar(191) NOT NULL,
 	`title` varchar(255) NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE `tasks` (
 	CONSTRAINT `tasks_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `users` (
+CREATE TABLE IF NOT EXISTS `users` (
 	`id` varchar(191) NOT NULL,
 	`email` varchar(191) NOT NULL,
 	`name` varchar(255) NOT NULL,
