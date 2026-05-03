@@ -102,6 +102,16 @@ export const passwordResetTokens = mysqlTable('password_reset_tokens', {
   expiresAt: timestamp('expires_at').notNull(),
 })
 
+export const boardLogs = mysqlTable('board_logs', {
+  id: varchar('id', { length: 191 }).primaryKey(),
+  boardId: varchar('board_id', { length: 191 }).notNull().references(() => boards.id, { onDelete: 'cascade' }),
+  type: mysqlEnum('type', ['agent_connection', 'mcp_request', 'user_connection', 'user_action']).notNull(),
+  actor: varchar('actor', { length: 255 }).notNull(),
+  action: varchar('action', { length: 255 }).notNull(),
+  data: json('data'),
+  createdAt: timestamp('created_at').notNull(),
+})
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Board = typeof boards.$inferSelect
@@ -119,3 +129,5 @@ export type Tag = typeof tags.$inferSelect
 export type NewTag = typeof tags.$inferInsert
 export type TaskTag = typeof taskTags.$inferSelect
 export type NewTaskTag = typeof taskTags.$inferInsert
+export type BoardLog = typeof boardLogs.$inferSelect
+export type NewBoardLog = typeof boardLogs.$inferInsert

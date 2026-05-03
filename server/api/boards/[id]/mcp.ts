@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '../../../db'
 import { boards } from '../../../db/schema'
 import { createBoardMcpServer } from '../../../utils/board-mcp'
+import { logBoardEvent } from '../../../utils/logs'
 
 export default defineEventHandler(async (event) => {
   const boardId = getRouterParam(event, 'id')!
@@ -45,6 +46,18 @@ export default defineEventHandler(async (event) => {
 
   // Browser redirect
   const accept = req.headers.accept || ''
+
+  // Log connection if it's an SSE start
+  if (req.method === 'GET' && accept.includes('text/event-stream')) {
+    await logBoardEvent({
+      boardId,
+      type: 'agent_connection',
+      actor: req.headers['user-agent'] || 'Unknown Agent',
+      action: 'connect',
+      data: { method: 'SSE' }
+    })
+  }
+
   if (accept.includes('text/html') && !accept.includes('text/event-stream') && !accept.includes('application/json')) {
     res.writeHead(200, { 'Content-Type': 'text/html' })
     res.end(`<meta http-equiv="refresh" content="0; url=/">`)

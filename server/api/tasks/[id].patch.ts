@@ -4,6 +4,7 @@ import { db } from '../../db'
 import { tasks, boardMembers } from '../../db/schema'
 import { emitTaskEvent } from '../../utils/socket'
 import { reindexTasks, reorderTasks } from '../../utils/tasks'
+import { logBoardEvent } from '../../utils/logs'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -81,6 +82,13 @@ export default defineEventHandler(async (event) => {
   }
 
   await db.update(tasks).set(updates).where(eq(tasks.id, id))
+  await logBoardEvent({
+    boardId: existing.boardId,
+    type: 'user_action',
+    actor: session.user.name || session.user.email,
+    action: 'task:updated',
+    data: { taskId: id, updates: body }
+  })
 
   const finalResults = await db.select().from(tasks).where(eq(tasks.id, id))
   const result = finalResults[0]

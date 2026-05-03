@@ -2,6 +2,8 @@ import { getRouterParam } from 'h3'
 import { eq, and } from 'drizzle-orm'
 import { db } from '../../db'
 import { boards, boardMembers } from '../../db/schema'
+import { logBoardEvent } from '../../utils/logs'
+import { getHeader } from 'h3'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -19,6 +21,14 @@ export default defineEventHandler(async (event) => {
   if (!membership) {
     throw createError({ statusCode: 403, statusMessage: 'Not a member of this board' })
   }
+
+  await logBoardEvent({
+    boardId: id,
+    type: 'user_connection',
+    actor: session.user.name || session.user.email,
+    action: 'view',
+    data: { userAgent: getHeader(event, 'user-agent') }
+  })
 
   const { mcpToken, ...boardData } = board
   return {

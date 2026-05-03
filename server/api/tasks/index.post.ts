@@ -3,6 +3,7 @@ import { eq, and } from 'drizzle-orm'
 import { db } from '../../db'
 import { tasks, boardMembers } from '../../db/schema'
 import { generateId } from '../../utils/id'
+import { logBoardEvent } from '../../utils/logs'
 import { reorderTasks } from '../../utils/tasks'
 import { emitTaskEvent } from '../../utils/socket'
 
@@ -52,6 +53,13 @@ export default defineEventHandler(async (event) => {
   }
 
   await db.insert(tasks).values(newTask)
+  await logBoardEvent({
+    boardId: body.boardId,
+    type: 'user_action',
+    actor: session.user.name || session.user.email,
+    action: 'task:created',
+    data: { taskId: newTask.id, title: newTask.title }
+  })
   await reorderTasks(body.boardId, status, newTask.id, newTask.order)
   emitTaskEvent(body.boardId, 'task:created', newTask)
 
