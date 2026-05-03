@@ -1,7 +1,7 @@
 import { readBody, getRouterParam } from 'h3'
 import { eq, and } from 'drizzle-orm'
 import { db } from '../../db'
-import { tasks, boardMembers } from '../../db/schema'
+import { tasks, boardMembers, taskDependencies } from '../../db/schema'
 import { emitTaskEvent } from '../../utils/socket'
 import { reindexTasks, reorderTasks } from '../../utils/tasks'
 import { logBoardEvent } from '../../utils/logs'
@@ -46,6 +46,16 @@ export default defineEventHandler(async (event) => {
     if (!validStatuses.includes(body.status)) {
       throw createError({ statusCode: 400, statusMessage: `Invalid status: ${body.status}` })
     }
+    if (body.status === 'done') {
+      const dependencies = await db.select().from(taskDependencies).where(eq(taskDependencies.taskId, id))
+      for (const dep of dependencies) {
+        const depTaskResults = await db.select().from(tasks).where(eq(tasks.id, dep.dependencyId))
+        const depTask = depTaskResults[0]
+        if (depTask && depTask.status !== 'done') {
+          throw createError({ statusCode: 400, statusMessage: `Cannot complete task. Dependency '${depTask.title}' is not finished.` })
+        }
+      }
+    }
     updates.status = body.status
   }
 
@@ -81,12 +91,19 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  if (body.isHumanOnly !== undefined) {
+    updates.isHumanOnly = !!body.isHumanOnly
+  }
+
   await db.update(tasks).set(updates).where(eq(tasks.id, id))
+  
+  const changedFields = Object.keys(body).filter(key => key !== 'updatedAt')
+  
   await logBoardEvent({
     boardId: existing.boardId,
     type: 'user_action',
     actor: session.user.name || session.user.email,
-    action: 'task:updated',
+    action: `task:updated:${changedFields.join(',')}`,
     data: { taskId: id, updates: body }
   })
 

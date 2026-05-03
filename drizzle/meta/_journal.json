@@ -8,6 +8,62 @@
       "when": 1777364285079,
       "tag": "0000_burly_captain_cross",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1777778831479,
+      "tag": "0001_workable_wrecker",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1777780922063,
+      "tag": "0002_chilly_dust",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1777784784763,
+      "tag": "0003_material_blue_shield",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1777784895578,
+      "tag": "0004_married_living_mummy",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1777789390972,
+      "tag": "0005_condemned_jack_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1777789799861,
+      "tag": "0006_noisy_wallop",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1777790444180,
+      "tag": "0007_dark_psylocke",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1777794054121,
+      "tag": "0008_lyrical_selene",
+      "breakpoints": true
     }
   ]
 }

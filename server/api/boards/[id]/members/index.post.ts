@@ -1,8 +1,9 @@
 import { readBody, getRouterParam } from 'h3'
 import { eq, and } from 'drizzle-orm'
 import { db } from '../../../../db'
-import { boardMembers, users, invitations } from '../../../../db/schema'
+import { boardMembers, users, invitations, boards } from '../../../../db/schema'
 import { generateId } from '../../../../utils/id'
+import { sendEmail } from '../../../../utils/mailer'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -54,6 +55,10 @@ export default defineEventHandler(async (event) => {
     inviterId: (session.user as any).id,
     createdAt: new Date()
   })
+
+  const board = await db.select().from(boards).where(eq(boards.id, boardId))
+  const boardName = board[0]?.name || 'a board'
+  await sendEmail(email, `You've been invited to ${boardName}`, `You've been invited to join ${boardName}.`)
 
   return { email, invited: true, message: 'Invitation sent' }
 })

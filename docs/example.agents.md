@@ -9,12 +9,12 @@
 
 ## 1. What is the Moo Tasks board?
 
-Moo Tasks is a kanban board that exposes each board as its own
+Moo Tasks is a kanban board (available at [mootasks.dev](https://mootasks.dev)) that exposes each board as its own
 [Model Context Protocol](https://modelcontextprotocol.io/specification/2025-11-25)
 (MCP) server. The endpoint is **scoped to a single board** — an agent connected
 to one board can never see or modify tasks on any other board.
 
-- **Endpoint URL:** `https://<your-moo-tasks-host>/api/boards/<boardId>/mcp`
+- **Endpoint URL:** `https://<your-moo-tasks-host>/api/boards/<boardId>/mcp` (or your self-hosted host)
 - **Transport:** `streamable-http`
 - **Auth:** `Authorization: Bearer <token>` (per
   [MCP basic spec](https://modelcontextprotocol.io/specification/2025-11-25/basic))
@@ -72,6 +72,9 @@ toggles in board settings):
 | `request-corrections` | Create a linked correction task off a reviewed task   |
 | `create-task`         | File a new task on the board                          |
 | `delete-task`         | Remove a task (use sparingly)                         |
+| `generate-changelog`  | Generate a markdown changelog based on completed (done) tasks |
+| `update-board-column` | Update a board column's name, description, or instructions    |
+| `list-board-members`  | List members of the board. WHEN TO USE: To find users to assign tasks to. |
 
 Plus resources/prompts:
 
@@ -110,6 +113,8 @@ capacity on this project), follow this loop:
 ### Rules of thumb
 
 - ✅ Always `accept-task` **before** writing code, so humans see who's working.
+- ✅ **Always check for comments** before starting work; they often contain
+  crucial context, constraints, or previous discussions.
 - ✅ One task at a time per agent identity.
 - ✅ If a task is unclear, leave a comment asking for clarification rather than
   guessing — and leave the task in `todo` (don't accept it yet).
@@ -129,3 +134,126 @@ capacity on this project), follow this loop:
 - Prefer per-agent or per-environment tokens if your deployment supports it.
 - Public boards (`mcpPublic = true`) skip auth entirely and should only be
   used for read-only demos.
+
+---
+
+## 6. Database schema & migrations (Drizzle)
+
+This project uses [Drizzle ORM](https://orm.drizzle.team) with the **MySQL**
+dialect. The schema lives in `server/db/schema.ts`, and generated SQL
+migrations live in `drizzle/` (with the source-of-truth journal at
+`drizzle/meta/_journal.json`). Agents must follow the rules below to keep
+the schema consistent and migrations **non-destructive**.
+
+### Available scripts
+
+| Script              | What it does                                                           |
+|---------------------|------------------------------------------------------------------------|
+| `npm run db:generate` | Diff `server/db/schema.ts` vs the latest snapshot → emit a new `drizzle/<NNNN>_*.sql` and update `meta/`. **Use this for every schema change.** |
+| `npm run db:migrate`  | Apply pending migrations (in journal order) inside a transaction. Tracked via `__drizzle_migrations`. |
+| `npm run db:push`     | Push schema directly to the DB **without** writing a migration file. ⚠️ Dev-only / scratch DBs — never use against shared, staging, or prod data. |
+| `npm run db:seed`     | Run the seed script.                                                  |
+
+### Golden rules for agents
+
+- ✅ **Edit `server/db/schema.ts` first**, then run `npm run db:generate`. Never
+  hand-write a migration file unless an existing generated one needs a small,
+  documented tweak.
+- ✅ **Commit the generated artifacts together**: the new `drizzle/<NNNN>_*.sql`,
+  the updated `drizzle/meta/_journal.json`, and the new
+  `drizzle/meta/<NNNN>_snapshot.json`. They are a single atomic unit.
+- ✅ **Keep migrations append-only.** Once a migration has been merged or run
+  against any shared environment, treat it as immutable. Fix mistakes by
+  generating a *new* migration on top.
+- ✅ **Preserve sequential numbering** (`0000`, `0001`, `0002`, …) and the
+  numbering style Drizzle emits. The number must match the entry in
+  `_journal.json`.
+- ❌ **Never drop journal entries or delete an applied migration file.** Drizzle
+  hashes file content; a missing/altered file mid-history breaks `db:migrate`
+  for everyone.
+- ❌ **Never add a `.sql` file to `drizzle/` without a matching journal entry.**
+  Orphaned files are ignored at best and cause hash drift at worst.
+- ❌ **Don't use `db:push` against the dev DB shared with humans** — it skips
+  the journal, so the next `db:migrate` will diverge.
+
+### Writing non-destructive migrations
+
+Production data must survive every migration. When generating or reviewing a
+migration, follow these patterns:
+
+1. **Additive over destructive.** Prefer `ADD COLUMN`, `CREATE TABLE`,
+   `CREATE INDEX`. Avoid `DROP COLUMN`, `DROP TABLE`, `RENAME COLUMN`, or
+   narrowing type changes in a single step.
+2. **New columns must be nullable or have a default.** MySQL will fail
+   `ADD COLUMN <x> NOT NULL` on a non-empty table without a default. Either
+   make the column nullable, give it a default, or split the change into:
+   *(a)* add nullable → *(b)* backfill data → *(c)* a later migration
+   tightening the constraint.
+3. **Renames are two-step.** To rename `foo` → `bar`: add `bar`, dual-write
+   in code, backfill, switch reads to `bar`, then drop `foo` in a *later*
+   migration once nothing references it.
+4. **Drops are two-step too.** First stop writing the column/table in code
+   and ship that release; then generate a migration that drops it.
+5. **Backfills go in their own migration** (or a separate idempotent script
+   under `scripts/`). Keep DDL and large `UPDATE`s separated so a slow
+   backfill doesn't hold a DDL lock.
+6. **MySQL has no `IF NOT EXISTS` for `ADD COLUMN`.** Don't try to make
+   migrations idempotent by hand — rely on the `__drizzle_migrations`
+   table to ensure each migration runs exactly once.
+7. **Foreign keys / indexes:** add them in a follow-up migration after the
+   column is populated, especially on large tables.
+
+### Recovering from drift
+
+If `db:migrate` fails with `ER_DUP_FIELDNAME` (or similar) it usually means
+the DB already has a change that Drizzle thinks is pending — the
+`__drizzle_migrations` table is out of sync with `drizzle/`.
+
+**For a fresh start in Docker:**
+If you are seeing errors about "Duplicate column" or "Table already exists" during the initial setup, it's often because a previous failed attempt left the database in a partially initialized state. Run the following command to start from a clean slate:
+
+```bash
+docker compose down -v && docker compose up --build
+```
+
+The `-v` flag is critical as it removes the persistent database volume.
+
+**Manual recovery:**
+1. Confirm the column/table actually exists in the DB.
+2. Verify the migration file content matches `drizzle/meta/_journal.json`
+   (don't edit the SQL after the fact).
+3. Compute the migration hash the same way Drizzle does and insert it into
+   `__drizzle_migrations` so the migration is marked applied:
+
+   ```bash
+   FILE=drizzle/0001_add_mcp_enabled_functions.sql
+   HASH=$(node -e "const c=require('fs').readFileSync('$FILE','utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean); console.log(require('crypto').createHash('sha256').update(c.join('')).digest('hex'))")
+   # use the matching `when` value from drizzle/meta/_journal.json
+   mysql ... -e "INSERT INTO __drizzle_migrations (hash, created_at) VALUES ('$HASH', <when>);"
+   ```
+
+4. Re-run `npm run db:migrate` and confirm `[✓] migrations applied successfully!`.
+
+See [`docs/drizzle-migrations.md`](docs/drizzle-migrations.md) for the full
+playbook, including snapshot/journal anatomy and review checklist.
+
+---
+
+## 7. AI Integration (Ollama)
+
+This project supports local AI integration via [Ollama](https://ollama.com).
+
+### Configuration
+Configure the Ollama connection via environment variables:
+
+- `OLLAMA_API_URL` (default: `http://localhost:11434`)
+- `OLLAMA_MODEL` (default: `llama3`)
+
+---
+
+## 8. Customizing this file
+
+The `agent-instructions` resource on the board lets you ship board-specific
+overrides without editing this file. Keep `AGENTS.md` for repo-level
+conventions (build commands, code style, test commands) and use the board's
+agent instructions for workflow tweaks.

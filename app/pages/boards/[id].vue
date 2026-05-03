@@ -6,13 +6,34 @@ const route = useRoute()
 const boardId = route.params.id as string
 const currentBoardName = useState<string | null>('currentBoardName')
 
-const board = ref<(Board & { role: string }) | null>(null)
+const { user } = useUserSession()
+const userEmail = computed(() => user.value?.email)
+
+const board = ref<(Board & { role: string, transfer: any }) | null>(null)
 const { fetchTasks, tasksByStatus, moveTask, createTask, updateTask, deleteTask, startSocket, stopSocket, tasks } = useTasks(boardId)
+const { tags, fetchTags } = useTags(boardId)
 
 const showCreateForm = ref(false)
 const showDeleteModal = ref(false)
+const searchQuery = ref('')
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+watch(searchQuery, () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(async () => {
+    await fetchTasks(searchQuery.value)
+  }, 300)
+})
 const selectedTask = ref<Task | null>(null)
 const showSettings = ref(false)
+
+function toggleSettings() {
+  showSettings.value = !showSettings.value
+  if (showSettings.value) {
+    nextTick(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+  }
+}
 const activeTab = ref<'general' | 'mcp'>('general')
 const showHelpModal = ref(false)
 const showMcpConfig = ref(false)
@@ -29,6 +50,7 @@ watch(() => board.value, (newBoard) => {
     currentBoardDescription.value = newBoard.description
     newName.value = newBoard.name
     newDescription.value = newBoard.description || ''
+    pendingTransfer.value = newBoard.transfer
     const enabledFunctions = (newBoard.mcpEnabledFunctions as Record<string, boolean>) || {}
     allFunctionsEnabled.value = !Object.values(enabledFunctions).includes(false)
   }
@@ -36,6 +58,37 @@ watch(() => board.value, (newBoard) => {
 
 const viewMode = ref<'board' | 'list'>('board')
 const showArchive = ref(false)
+
+const pendingTransfer = ref<any>(null)
+const recipientEmail = ref('')
+
+async function requestTransfer() {
+  if (!recipientEmail.value) return
+  try {
+    await $fetch(`/api/boards/${boardId}/transfer`, { method: 'POST', body: { email: recipientEmail.value } })
+    window.location.reload()
+  } catch (e: any) {
+    alert(e.data?.message || 'Failed to request transfer')
+  }
+}
+
+async function cancelTransfer() {
+  try {
+    await $fetch(`/api/boards/${boardId}/transfer/cancel`, { method: 'POST' })
+    window.location.reload()
+  } catch (e: any) {
+    alert(e.data?.message || 'Failed to cancel transfer')
+  }
+}
+
+async function acceptTransfer() {
+  try {
+    await $fetch(`/api/boards/${boardId}/transfer/accept`, { method: 'POST' })
+    window.location.reload()
+  } catch (e: any) {
+    alert(e.data?.message || 'Failed to accept transfer')
+  }
+}
 
 const mcpConfigCopied = ref(false)
 const mcpToken = ref<string | null>(null)
@@ -174,6 +227,7 @@ onMounted(async () => {
   await loadBoard()
   mcpFunctions.value = await $fetch<string[]>('/api/mcp-functions')
   await fetchTasks()
+  await fetchTags()
 
   const taskId = route.query.taskId || route.query.taskid || route.query.task_id
   if (taskId && typeof taskId === 'string') {
@@ -207,6 +261,17 @@ onUnmounted(() => stopSocket())
     <div class="flex-1 flex flex-col w-full max-w-[1600px] mx-auto">
       <Teleport to="#board-actions-teleport">
         <div class="flex items-center gap-3">
+          <div class="relative">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search tasks..."
+              class="pl-9 pr-4 py-2 text-xs bg-white dark:bg-surface-card border border-gray-200 dark:border-surface-border rounded-xl focus:ring-2 focus:ring-neon-cyan/30 focus:border-neon-cyan/50 transition-all w-48"
+            />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
           <div class="flex bg-gray-100 dark:bg-surface-raised p-1 rounded-xl border border-gray-200 dark:border-surface-border">
             <button
               @click="viewMode = 'board'"
@@ -240,7 +305,7 @@ onUnmounted(() => stopSocket())
             </svg>
           </button>
           <button
-            @click="showSettings = !showSettings"
+            @click="toggleSettings()"
             class="p-2.5 text-gray-600 dark:text-gray-300 bg-white dark:bg-surface-card border border-gray-200 dark:border-surface-border rounded-xl hover:bg-gray-50 dark:hover:bg-surface-raised transition-all active:scale-95 shadow-sm"
             :class="{ 'ring-2 ring-neon-cyan/30 border-neon-cyan/50': showSettings }"
             title="Settings"
@@ -309,7 +374,13 @@ onUnmounted(() => stopSocket())
               ❓
             </button>
           </div>
-          <button @click="showSettings = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">&times;</button>
+          <button
+            @click="showSettings = false"
+            class="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-surface-hover transition-all"
+            title="Close Settings"
+          >
+            <span class="text-2xl">&times;</span>
+          </button>
         </div>
 
 
@@ -362,6 +433,23 @@ onUnmounted(() => stopSocket())
               >
                 Save Changes
               </button>
+
+              <div class="mt-8 border-t border-gray-200 dark:border-surface-border pt-8">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-gray-900 dark:text-white mb-4">Transfer Ownership</h3>
+                <div v-if="pendingTransfer" class="bg-neon-orange/10 border border-neon-orange/20 rounded-xl p-4">
+                  <p class="text-sm text-gray-700 dark:text-gray-300">A pending transfer to {{ pendingTransfer.recipientEmail }} exists.</p>
+                  <button @click="cancelTransfer" class="mt-2 text-xs font-bold text-red-600 dark:text-neon-red">Cancel Transfer</button>
+                </div>
+                <div v-else class="flex gap-2">
+                  <input v-model="recipientEmail" type="email" placeholder="Recipient email" class="flex-1 bg-gray-50 dark:bg-surface-dark/50 border border-gray-200 dark:border-surface-border rounded-xl px-4 py-2 text-sm text-gray-900 dark:text-white" />
+                  <button @click="requestTransfer" class="text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-xl bg-neon-cyan text-white">Transfer</button>
+                </div>
+              </div>
+
+              <div v-if="pendingTransfer && pendingTransfer.recipientEmail === userEmail" class="mt-8 border-t border-gray-200 dark:border-surface-border pt-8">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-gray-900 dark:text-white mb-4">Accept Ownership</h3>
+                <button @click="acceptTransfer" class="text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-xl bg-neon-cyan text-white">Accept Ownership</button>
+              </div>
             </div>
           </div>
 
@@ -539,7 +627,7 @@ onUnmounted(() => stopSocket())
     </transition>
 
     <div class="relative min-h-[60vh]">
-      <KanbanBoard v-if="viewMode === 'board'" :board-id="boardId" :show-archive="showArchive" @task-click="selectedTask = $event" />
+      <KanbanBoard v-if="viewMode === 'board'" :board-id="boardId" :show-archive="showArchive" :search-query="searchQuery" :tags="tags" @task-click="selectedTask = $event" />
       <TaskListView v-else :board-id="boardId" :show-archive="showArchive" @task-click="selectedTask = $event" />
     </div>
 

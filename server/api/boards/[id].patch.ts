@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
   if (body.name && typeof body.name === 'string') updates.name = body.name.trim()
   if (typeof body.description === 'string') updates.description = body.description.trim()
   if (typeof body.mcpPublic === 'boolean') updates.mcpPublic = body.mcpPublic
+  if (typeof body.showTimeline === 'boolean') updates.showTimeline = body.showTimeline
 
   await db.update(boards).set(updates).where(eq(boards.id, id))
   await logBoardEvent({

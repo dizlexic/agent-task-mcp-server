@@ -58,10 +58,10 @@ export async function requireUserSession(event: any, opts: { statusCode?: number
  * Internal helper to get the raw h3 session (sealed cookie).
  */
 function _useRawSession(event: any) {
-  const runtimeConfig = useRuntimeConfig(event)
+  const runtimeConfig = useRuntimeConfig()
   return useSession(event, {
     name: 'nuxt-session',
-    password: runtimeConfig.session.password as string,
+    password: (runtimeConfig.session as any)?.password || process.env.NUXT_SESSION_PASSWORD || 'default-session-password-at-least-32-chars-long',
     cookie: {
       sameSite: 'lax'
     }

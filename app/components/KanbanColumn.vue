@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import draggable from 'vuedraggable'
-import type { Task } from '../../server/db/schema'
+import type { Task, Tag, TaskTag } from '../../server/db/schema'
 import { COLUMN_COLORS } from '../utils/task-constants'
 
 const props = defineProps<{
   title: string
   status: string
   tasks: Task[]
+  tags: Tag[]
+  taskTags: TaskTag[]
 }>()
 
 const emit = defineEmits<{
   taskMoved: [taskId: string, newStatus: string, newIndex: number]
   taskClick: [task: Task]
+  contextmenu: [event: MouseEvent, task: Task]
+  archiveAll: []
 }>()
 
 const localTasks = ref<Task[]>([...props.tasks])
@@ -41,12 +45,21 @@ const col = computed(() => (COLUMN_COLORS as any)[props.status] || COLUMN_COLORS
     :aria-label="`${title} column, ${tasks.length} tasks`"
   >
     <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-surface-border/50">
-      <h3
-        class="text-xs font-bold uppercase tracking-widest"
-        :class="col.text"
-      >
-        {{ title }}
-      </h3>
+      <div class="flex items-center gap-2">
+        <h3
+          class="text-xs font-bold uppercase tracking-widest"
+          :class="col.text"
+        >
+          {{ title }}
+        </h3>
+        <button
+          v-if="status === 'done'"
+          @click="emit('archiveAll')"
+          class="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-gray-200 dark:border-surface-border bg-white dark:bg-surface-raised text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-hover hover:text-neon-cyan dark:hover:text-neon-cyan transition-all"
+        >
+          Archive All
+        </button>
+      </div>
       <span
         class="text-[10px] font-bold rounded-full px-2 py-0.5 min-w-[20px] text-center"
         :class="col.badge"
@@ -70,7 +83,13 @@ const col = computed(() => (COLUMN_COLORS as any)[props.status] || COLUMN_COLORS
     >
       <template #item="{ element }">
         <div :data-id="element.id">
-          <TaskCard :task="element" @click="emit('taskClick', element)" />
+          <TaskCard 
+            :task="element" 
+            :tags="tags" 
+            :task-tags="taskTags"
+            @click="emit('taskClick', element)" 
+            @contextmenu="emit('contextmenu', $event, element)" 
+          />
         </div>
       </template>
       <template #footer>

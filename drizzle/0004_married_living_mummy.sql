@@ -1,0 +1,1 @@
+ALTER TABLE `board_members` ADD `is_favorite` boolean DEFAULT false NOT NULL;

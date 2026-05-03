@@ -19,6 +19,7 @@ export default defineEventHandler(async (event) => {
     ownerId: session.user.id,
     mcpToken: null,
     mcpEnabledFunctions: null,
+    lastActivityAt: null,
     createdAt: now,
     updatedAt: now,
   }
