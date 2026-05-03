@@ -53,7 +53,7 @@ const col = computed(() => (COLUMN_COLORS as any)[props.status] || COLUMN_COLORS
           {{ title }}
         </h3>
         <button
-          v-if="status === 'done'"
+          v-if="status === 'done' && tasks.length > 1"
           @click="emit('archiveAll')"
           class="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-gray-200 dark:border-surface-border bg-white dark:bg-surface-raised text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-hover hover:text-neon-cyan dark:hover:text-neon-cyan transition-all"
         >
