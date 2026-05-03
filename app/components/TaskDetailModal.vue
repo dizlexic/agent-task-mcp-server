@@ -226,7 +226,7 @@ function openParentTask() {
       </div>
 
       <!-- Content -->
-      <div class="flex-1 flex overflow-hidden">
+      <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <div class="flex-1 overflow-y-auto p-6 space-y-6">
           <div v-if="error" role="alert" class="bg-red-50 dark:bg-neon-red/10 text-red-600 dark:text-neon-red text-sm font-medium rounded-xl px-4 py-3 border border-red-200 dark:border-neon-red/20 shadow-sm shadow-neon-red/5">{{ error }}</div>
 
@@ -400,5 +400,18 @@ function openParentTask() {
           </div>
         </div>
 
+        <!-- Comments Section -->
+        <div class="w-full lg:w-1/3 border-l border-gray-100 dark:border-surface-border/50 overflow-y-auto p-6 bg-gray-50 dark:bg-surface-raised/20">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Activity</h3>
+            <button @click="showTimeline = !showTimeline" class="text-[10px] font-bold uppercase tracking-widest text-neon-cyan hover:text-neon-cyan/80 transition-colors">
+              {{ showTimeline ? 'Hide Timeline' : 'Show Timeline' }}
+            </button>
+          </div>
+          <TaskComments :task-id="task.id" :board-id="boardId" />
+          <TaskTimeline v-if="showTimeline" class="mt-6" :task-id="task.id" :board-id="boardId" />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
