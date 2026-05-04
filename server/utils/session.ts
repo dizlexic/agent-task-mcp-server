@@ -1,5 +1,4 @@
 import { useSession, createError } from 'h3'
-import { defu } from 'defu'
 
 /**
  * Get the user session from the cookie.
@@ -33,9 +32,6 @@ export async function replaceUserSession(event: any, data: any) {
  */
 export async function clearUserSession(event: any) {
   const session = await _useRawSession(event)
-  const data = session.data
-  // @ts-ignore: sessionHooks might be globally available or imported in a way I don't see
-  await sessionHooks.callHookParallel('clear', data, event)
   await session.clear()
   return true
 }
@@ -58,10 +54,11 @@ export async function requireUserSession(event: any, opts: { statusCode?: number
  * Internal helper to get the raw h3 session (sealed cookie).
  */
 function _useRawSession(event: any) {
-  const runtimeConfig = useRuntimeConfig()
+  const config = useRuntimeConfig(event)
+  // @ts-ignore
   return useSession(event, {
     name: 'nuxt-session',
-    password: (runtimeConfig.session as any)?.password || process.env.NUXT_SESSION_PASSWORD || 'default-session-password-at-least-32-chars-long',
+    password: config.session?.password || process.env.NUXT_SESSION_PASSWORD || 'default-session-password-at-least-32-chars-long',
     cookie: {
       sameSite: 'lax'
     }
