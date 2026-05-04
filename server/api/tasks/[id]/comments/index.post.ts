@@ -3,6 +3,7 @@ import { eq, and } from 'drizzle-orm'
 import { db } from '../../../../db'
 import { tasks, comments, boardMembers } from '../../../../db/schema'
 import { generateId } from '../../../../utils/id'
+import { logBoardEvent } from '../../../../utils/logs'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -36,9 +37,17 @@ export default defineEventHandler(async (event) => {
     boardId: task.boardId,
     author: session.user.name || session.user.email,
     content: body.content.trim(),
+    attachment: body.attachment || null,
     createdAt: new Date(),
   }
 
   await db.insert(comments).values(newComment)
+  await logBoardEvent({
+    boardId: task.boardId,
+    type: 'user_action',
+    actor: session.user.name || session.user.email,
+    action: 'comment:added',
+    data: { taskId, commentId: newComment.id }
+  })
   return newComment
 })

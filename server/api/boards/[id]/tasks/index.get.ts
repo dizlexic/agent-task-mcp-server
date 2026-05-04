@@ -1,5 +1,5 @@
 import { getRouterParam, getQuery } from 'h3'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, or, like } from 'drizzle-orm'
 import { db } from '../../../../db'
 import { tasks, boardMembers } from '../../../../db/schema'
 
@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event)
   const status = query.status as string | undefined
+  const q = query.q as string | undefined
 
   const conditions = [eq(tasks.boardId, boardId)]
   if (status) {
@@ -23,6 +24,10 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: `Invalid status: ${status}` })
     }
     conditions.push(eq(tasks.status, status as any))
+  }
+
+  if (q) {
+    conditions.push(or(like(tasks.title, `%${q}%`), like(tasks.description, `%${q}%`))!)
   }
 
   return await db.select().from(tasks).where(and(...conditions))

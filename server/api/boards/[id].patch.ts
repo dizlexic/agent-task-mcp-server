@@ -2,6 +2,7 @@ import { readBody, getRouterParam } from 'h3'
 import { eq, and } from 'drizzle-orm'
 import { db } from '../../db'
 import { boards, boardMembers } from '../../db/schema'
+import { logBoardEvent } from '../../utils/logs'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -19,8 +20,16 @@ export default defineEventHandler(async (event) => {
   if (body.name && typeof body.name === 'string') updates.name = body.name.trim()
   if (typeof body.description === 'string') updates.description = body.description.trim()
   if (typeof body.mcpPublic === 'boolean') updates.mcpPublic = body.mcpPublic
+  if (typeof body.showTimeline === 'boolean') updates.showTimeline = body.showTimeline
 
   await db.update(boards).set(updates).where(eq(boards.id, id))
+  await logBoardEvent({
+    boardId: id,
+    type: 'user_action',
+    actor: session.user.name || session.user.email,
+    action: 'board:updated',
+    data: { updates: body }
+  })
   const results = await db.select().from(boards).where(eq(boards.id, id))
   return results[0]
 })

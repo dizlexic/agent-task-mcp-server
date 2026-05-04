@@ -10,29 +10,38 @@ export default defineNitroPlugin((nitro) => {
   // @ts-expect-error - accessing internal h3 server instance
   const server = nitro.h3App?.handler?.server ?? nitro.server
 
-  // We'll lazily initialize when the first request comes in
+  // Fallback / safety in case server isn't ready
   nitro.hooks.hook('request', (event) => {
     if (io) return
 
     const nodeServer = (event.node?.res?.socket as any)?.server
     if (!nodeServer) return
 
-    io = new SocketIOServer(nodeServer, {
+    io = new SocketIOServer({
       path: '/_ws',
       cors: { origin: '*' },
       serveClient: false,
     })
+    io.attach(nodeServer)
 
-    io.on('connection', (socket) => {
-      // Join a board room
-      socket.on('join-board', (boardId: string) => {
-        socket.join(`board:${boardId}`)
-      })
+    setupSocketHandlers(io)
+  })
 
-      // Leave a board room
-      socket.on('leave-board', (boardId: string) => {
-        socket.leave(`board:${boardId}`)
-      })
+  if (io) {
+    setupSocketHandlers(io)
+  }
+})
+
+function setupSocketHandlers(ioInstance: SocketIOServer) {
+  ioInstance.on('connection', (socket) => {
+    // Join a board room
+    socket.on('join-board', (boardId: string) => {
+      socket.join(`board:${boardId}`)
+    })
+
+    // Leave a board room
+    socket.on('leave-board', (boardId: string) => {
+      socket.leave(`board:${boardId}`)
     })
   })
-})
+}

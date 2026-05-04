@@ -5,6 +5,7 @@ import { tasks, boardMembers } from '../../../../db/schema'
 import { generateId } from '../../../../utils/id'
 import { emitTaskEvent } from '../../../../utils/socket'
 import { reorderTasks } from '../../../../utils/tasks'
+import { logBoardEvent } from '../../../../utils/logs'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -38,12 +39,22 @@ export default defineEventHandler(async (event) => {
     priority,
     order: 0,
     assignee: body.assignee?.trim() || null,
+    isHumanOnly: !!body.isHumanOnly,
     createdAt: now,
     updatedAt: now,
   }
 
   await db.insert(tasks).values(newTask)
   await reorderTasks(boardId, status, newTask.id, 0)
+  
+  await logBoardEvent({
+    boardId: boardId,
+    type: 'user_action',
+    actor: session.user.name || session.user.email,
+    action: 'task:created',
+    data: { taskId: newTask.id }
+  })
+  
   emitTaskEvent(boardId, 'task:created', newTask)
   return newTask
 })

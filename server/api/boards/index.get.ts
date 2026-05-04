@@ -6,13 +6,19 @@ export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
   const userId = session.user.id
 
-  const memberships = await db.select({ boardId: boardMembers.boardId })
-    .from(boardMembers)
+  const results = await db.select({
+    board: boards,
+    lastVisitedAt: boardMembers.lastVisitedAt,
+    isFavorite: boardMembers.isFavorite
+  })
+    .from(boards)
+    .innerJoin(boardMembers, eq(boards.id, boardMembers.boardId))
     .where(eq(boardMembers.userId, userId))
 
-  const boardIds = memberships.map(m => m.boardId)
-  if (boardIds.length === 0) return []
-
-  const allBoards = await db.select().from(boards)
-  return allBoards.filter(b => boardIds.includes(b.id))
+  return results.map(r => ({
+    ...r.board,
+    lastVisitedAt: r.lastVisitedAt,
+    lastActivityAt: r.board.lastActivityAt,
+    isFavorite: r.isFavorite
+  }))
 })

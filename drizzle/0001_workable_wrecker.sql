@@ -1,0 +1,1 @@
+ALTER TABLE `tasks` ADD `is_human_only` boolean DEFAULT false NOT NULL;

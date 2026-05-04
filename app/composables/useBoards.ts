@@ -1,5 +1,11 @@
 import type { Board } from '../../server/db/schema'
 
+export interface BoardWithActivity extends Board {
+  lastVisitedAt: string | null
+  lastActivityAt: string | null
+  isFavorite: boolean
+}
+
 export interface Invitation {
   id: string
   boardId: string
@@ -10,7 +16,7 @@ export interface Invitation {
 }
 
 export function useBoards() {
-  const boards = useState<Board[]>('boards', () => [])
+  const boards = useState<BoardWithActivity[]>('boards', () => [])
   const invitations = useState<Invitation[]>('invitations', () => [])
   const sentInvitations = useState<Invitation[]>('sent-invitations', () => [])
   const loading = useState('boards-loading', () => false)
@@ -18,7 +24,7 @@ export function useBoards() {
   async function fetchBoards() {
     loading.value = true
     try {
-      boards.value = await $fetch<Board[]>('/api/boards')
+      boards.value = await $fetch<BoardWithActivity[]>('/api/boards')
     } finally {
       loading.value = false
     }
@@ -63,6 +69,14 @@ export function useBoards() {
     boards.value = boards.value.filter(b => b.id !== id)
   }
 
+  async function toggleFavorite(id: string, isFavorite: boolean) {
+    await $fetch(`/api/boards/${id}/favorite`, { method: 'PATCH', body: { isFavorite } })
+    const board = boards.value.find(b => b.id === id)
+    if (board) {
+      board.isFavorite = isFavorite
+    }
+  }
+
   return { 
     boards, 
     invitations, 
@@ -76,6 +90,7 @@ export function useBoards() {
     cancelInvitation,
     createBoard, 
     deleteBoard,
-    leaveBoard
+    leaveBoard,
+    toggleFavorite
   }
 }

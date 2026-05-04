@@ -108,6 +108,17 @@ CREATE TABLE IF NOT EXISTS `users` (
 	CONSTRAINT `users_email_unique` UNIQUE(`email`)
 );
 --> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `board_logs` (
+	`id` varchar(191) NOT NULL,
+	`board_id` varchar(191) NOT NULL,
+	`type` enum('agent_connection','mcp_request','user_connection','user_action') NOT NULL,
+	`actor` varchar(255) NOT NULL,
+	`action` varchar(255) NOT NULL,
+	`data` json,
+	`created_at` timestamp NOT NULL,
+	CONSTRAINT `board_logs_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
 DROP PROCEDURE IF EXISTS AddConstraintIfNotExists;--> statement-breakpoint
 CREATE PROCEDURE AddConstraintIfNotExists(
 	IN tableName VARCHAR(255),
@@ -144,4 +155,5 @@ CALL AddConstraintIfNotExists('tags', 'tags_board_id_boards_id_fk', 'FOREIGN KEY
 CALL AddConstraintIfNotExists('task_tags', 'task_tags_task_id_tasks_id_fk', 'FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
 CALL AddConstraintIfNotExists('task_tags', 'task_tags_tag_id_tags_id_fk', 'FOREIGN KEY (`tag_id`) REFERENCES `tags`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
 CALL AddConstraintIfNotExists('tasks', 'tasks_board_id_boards_id_fk', 'FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
+CALL AddConstraintIfNotExists('board_logs', 'board_logs_board_id_boards_id_fk', 'FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE cascade ON UPDATE no action');--> statement-breakpoint
 DROP PROCEDURE IF EXISTS AddConstraintIfNotExists;

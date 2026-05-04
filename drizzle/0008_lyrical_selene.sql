@@ -1,0 +1,1 @@
+ALTER TABLE `boards` ADD `show_timeline` boolean DEFAULT false NOT NULL;
