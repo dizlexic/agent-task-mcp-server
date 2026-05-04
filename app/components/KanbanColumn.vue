@@ -39,7 +39,7 @@ const col = computed(() => (COLUMN_COLORS as any)[props.status] || COLUMN_COLORS
 
 <template>
   <div
-    class="flex flex-col rounded-xl border-t-4 min-w-[300px] w-[300px] bg-gray-50/50 dark:bg-surface-card border border-gray-200 dark:border-surface-border shadow-sm dark:shadow-xl transition-all duration-300"
+    class="flex flex-col rounded-xl border-t-4 min-w-[300px] w-[300px] bg-gray-50/50 dark:bg-surface-card border border-gray-200 dark:border-surface-border shadow-sm dark:shadow-xl transition-all duration-300 cursor-default"
     :class="[col.border, col.glow, isDragOver ? 'ring-2 ring-neon-cyan/30 dark:ring-neon-cyan/20 bg-gray-100 dark:bg-surface-hover' : '']"
     role="region"
     :aria-label="`${title} column, ${tasks.length} tasks`"

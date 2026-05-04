@@ -131,6 +131,7 @@ export const boardColumns = mysqlTable('board_columns', {
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   instructions: text('instructions'),
+  status: mysqlEnum('status', ['backlog', 'todo', 'in_progress', 'review', 'done', 'archive']).notNull().default('backlog'),
   order: int('order').notNull().default(0),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),

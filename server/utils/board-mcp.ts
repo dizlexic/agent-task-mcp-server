@@ -99,9 +99,10 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         description: z.string().optional().describe('Task description'),
         priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Task priority'),
         parentTaskId: z.string().optional().describe('Parent task ID if this is a correction/follow-up task'),
+        isHumanOnly: z.boolean().optional().describe('Whether the task is human-only (cannot be completed by AI agents)'),
       },
-      async ({ title, description, priority, parentTaskId }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'create-task', data: { title, priority, parentTaskId } })
+      async ({ title, description, priority, parentTaskId, isHumanOnly }) => {
+        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'create-task', data: { title, priority, parentTaskId, isHumanOnly } })
         const now = new Date()
         const newTask = {
           id: generateId(),
@@ -113,6 +114,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
           order: 0,
           assignee: null,
           parentTaskId: parentTaskId?.trim() || null,
+          isHumanOnly: !!isHumanOnly,
           createdAt: now,
           updatedAt: now,
         }
@@ -316,9 +318,8 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         taskId: z.string().describe('The unique task ID'),
         author: z.string().min(1).describe('Name of the comment author'),
         content: z.string().min(1).describe('The comment text'),
-        attachment: z.object({ url: z.string(), type: z.string(), name: z.string().optional() }).optional().describe('Attachment metadata'),
       },
-      async ({ taskId, author, content, attachment }) => {
+      async ({ taskId, author, content }) => {
         await logBoardEvent({ boardId, type: 'mcp_request', actor: author, action: 'add-comment', data: { taskId } })
         const taskResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
         const task = taskResults[0]
@@ -330,7 +331,38 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
           boardId,
           author: author.trim(),
           content: content.trim(),
-          attachment: attachment || null,
+          attachment: null,
+          createdAt: new Date(),
+        }
+        await db.insert(comments).values(newComment)
+        return { content: [{ type: 'text', text: JSON.stringify({ message: 'Comment added', comment: newComment }) }] }
+      },
+    )
+
+    server.tool(
+      'add-comment-with-attachment',
+      'Add a comment with an attachment to a task.',
+      {
+        taskId: z.string().describe('The unique task ID'),
+        author: z.string().min(1).describe('Name of the comment author'),
+        content: z.string().min(1).describe('The comment text'),
+        attachmentUrl: z.string().describe('The URL of the attachment'),
+        attachmentType: z.string().describe('The type of the attachment (e.g., image/png)'),
+        attachmentName: z.string().optional().describe('The name of the attachment'),
+      },
+      async ({ taskId, author, content, attachmentUrl, attachmentType, attachmentName }) => {
+        await logBoardEvent({ boardId, type: 'mcp_request', actor: author, action: 'add-comment', data: { taskId } })
+        const taskResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
+        const task = taskResults[0]
+        if (!task) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
+
+        const newComment = {
+          id: generateId(),
+          taskId,
+          boardId,
+          author: author.trim(),
+          content: content.trim(),
+          attachment: { url: attachmentUrl, type: attachmentType, name: attachmentName || null },
           createdAt: new Date(),
         }
         await db.insert(comments).values(newComment)

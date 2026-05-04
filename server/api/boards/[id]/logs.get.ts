@@ -1,7 +1,7 @@
 import { getRouterParam, defineEventHandler, createError } from 'h3'
 import { eq, and, desc } from 'drizzle-orm'
 import { db } from '../../../db'
-import { boards, boardMembers, boardLogs } from '../../../db/schema'
+import { boards, boardMembers, boardLogs } from '#server/db/schema'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

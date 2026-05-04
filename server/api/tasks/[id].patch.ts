@@ -98,12 +98,13 @@ export default defineEventHandler(async (event) => {
   await db.update(tasks).set(updates).where(eq(tasks.id, id))
   
   const changedFields = Object.keys(body).filter(key => key !== 'updatedAt')
+  const formattedFields = changedFields.map(field => field.replace(/([A-Z])/g, ' $1').toLowerCase()).join(', ')
   
   await logBoardEvent({
     boardId: existing.boardId,
     type: 'user_action',
     actor: session.user.name || session.user.email,
-    action: `task:updated:${changedFields.join(',')}`,
+    action: `Updated ${formattedFields} on task "${existing.title}"`,
     data: { taskId: id, updates: body }
   })
 

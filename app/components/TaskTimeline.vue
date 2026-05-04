@@ -33,7 +33,7 @@ onMounted(loadTimeline)
 </script>
 
 <template>
-  <div class="space-y-4 border-2 border-red-500 p-4">
+  <div class="space-y-4 p-4">
     <div class="flex items-center gap-2">
       <span class="text-neon-purple" aria-hidden="true">⏳</span>
       <h3 class="text-sm font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300">Timeline (Debugging: {{ events.length }} events)</h3>

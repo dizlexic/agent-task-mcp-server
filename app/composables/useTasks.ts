@@ -73,10 +73,10 @@ export function useTasks(boardId: string) {
     }
   }
 
-  async function addComment(taskId: string, content: string) {
+  async function addComment(taskId: string, content: string, attachment?: any) {
     return await $fetch(`/api/tasks/${taskId}/comments`, {
       method: 'POST',
-      body: { content }
+      body: { content, attachment }
     })
   }
 

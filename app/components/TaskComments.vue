@@ -6,6 +6,7 @@ const { addComment, fetchComments } = useTasks(props.boardId)
 
 const comments = ref<Comment[]>([])
 const newComment = ref('')
+const attachmentUrl = ref('')
 const loading = ref(false)
 const submitting = ref(false)
 const error = ref('')
@@ -26,9 +27,10 @@ async function onSubmit() {
   submitting.value = true
   error.value = ''
   try {
-    const comment = await addComment(props.taskId, newComment.value.trim())
+    const comment = await addComment(props.taskId, newComment.value.trim(), attachmentUrl.value.trim() ? { url: attachmentUrl.value.trim() } : undefined)
     comments.value.push(comment as Comment)
     newComment.value = ''
+    attachmentUrl.value = ''
   } catch (e: any) {
     error.value = e.data?.message || 'Failed to add comment'
   } finally {
@@ -75,6 +77,14 @@ onMounted(loadComments)
             </div>
             <div class="bg-gray-50 dark:bg-surface-raised/40 rounded-2xl rounded-tl-none px-4 py-3 border border-gray-100 dark:border-surface-border/30">
               <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{{ comment.content }}</p>
+              <div v-if="comment.attachment" class="mt-2 pt-2 border-t border-gray-100 dark:border-surface-border/50">
+                <a :href="(comment.attachment as any).url" target="_blank" class="text-xs text-neon-cyan hover:underline flex items-center gap-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.586 6.586a6 6 0 108.486 8.486L18 13" />
+                  </svg>
+                  Attachment
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -93,6 +103,12 @@ onMounted(loadComments)
             placeholder="Write a comment..."
             @keydown.enter.ctrl.prevent="onSubmit"
             @keydown.enter.meta.prevent="onSubmit"
+          />
+          <input
+            v-model="attachmentUrl"
+            type="text"
+            class="w-full mt-2 border border-gray-200 dark:border-surface-border dark:bg-surface-raised dark:text-white rounded-2xl px-4 py-2 text-sm focus:ring-2 focus:ring-neon-cyan/30 focus:border-neon-cyan/50 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-sm"
+            placeholder="Attachment URL (optional)..."
           />
           <div class="absolute bottom-3 right-3 flex items-center gap-2">
              <span class="text-[9px] text-gray-400 dark:text-gray-600 font-bold uppercase tracking-tighter hidden sm:inline">⌘ + Enter</span>
