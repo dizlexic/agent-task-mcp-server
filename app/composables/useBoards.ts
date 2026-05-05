@@ -2,6 +2,7 @@ import type { Board } from '../../server/db/schema'
 
 export interface BoardWithActivity extends Board {
   lastVisitedAt: string | null
+  lastActivityAt: string | null
   isFavorite: boolean
 }
 

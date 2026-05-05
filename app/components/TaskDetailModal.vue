@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { throttle } from '../utils/throttle'
-import type { Board, Task } from '../../server/db/schema'
+import { debounce } from '../utils/debounce'
+import type { Task } from '../../server/db/schema'
 import type { TaskPriority, TaskStatus } from '../composables/useTasks'
 
 const props = defineProps<{ task: Task; boardId: string }>()
@@ -26,17 +26,14 @@ const selectedTagIds = ref<string[]>(
     .map(tt => tt.tagId)
 )
 const saving = ref(false)
-const throttledSaveTask = throttle((closeModal = false) => saveTask(closeModal), 30000)
+let autosaveInterval: ReturnType<typeof setInterval> | null = null
+const debouncedSaveTask = debounce((closeModal = false) => saveTask(closeModal), 500)
 const confirmDelete = ref(false)
 const error = ref('')
 const linkCopied = ref(false)
 const showTimeline = ref(false)
 const modalRef = ref<HTMLElement | null>(null)
 
-async function fetchBoardSettings() {
-  const board = await $fetch<Board>(`/api/boards/${props.boardId}`)
-  showTimeline.value = !!board.showTimeline
-}
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
@@ -50,12 +47,11 @@ onMounted(() => {
   fetchTags()
   fetchTaskTags()
   fetchMembers()
-  fetchBoardSettings()
-
-// Autosave
-watch([title, description, priority, difficulty, status, assignee, isHumanOnly], () => {
-  throttledSaveTask(false)
-})
+  
+  // Autosave interval
+  autosaveInterval = setInterval(() => {
+    saveTask(false)
+  }, 20000)
 })
 
 watch(selectedTagIds, async (newTags, oldTags) => {
@@ -77,6 +73,7 @@ watch(() => taskTags.value, () => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
+  if (autosaveInterval) clearInterval(autosaveInterval)
 })
 
 async function copyTaskLink() {
@@ -224,8 +221,8 @@ function openParentTask() {
       </div>
 
       <!-- Content -->
-      <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+      <div class="flex-1 flex flex-col xl:flex-row overflow-y-auto xl:overflow-hidden">
+        <div class="flex-1 xl:w-2/3 xl:overflow-y-auto p-6 space-y-6">
           <div v-if="error" role="alert" class="bg-red-50 dark:bg-neon-red/10 text-red-600 dark:text-neon-red text-sm font-medium rounded-xl px-4 py-3 border border-red-200 dark:border-neon-red/20 shadow-sm shadow-neon-red/5">{{ error }}</div>
 
           <form @submit.prevent="onSave" id="task-edit-form" class="space-y-6">
@@ -399,7 +396,7 @@ function openParentTask() {
         </div>
 
         <!-- Comments Section -->
-        <div class="w-full lg:w-1/3 border-l border-gray-100 dark:border-surface-border/50 overflow-y-auto p-6 bg-gray-50 dark:bg-surface-raised/20">
+        <div class="w-full xl:w-1/3 border-t xl:border-t-0 xl:border-l border-gray-100 dark:border-surface-border/50 xl:overflow-y-auto p-6 bg-gray-50 dark:bg-surface-raised/20">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Activity</h3>
             <button @click="showTimeline = !showTimeline" class="text-[10px] font-bold uppercase tracking-widest text-neon-cyan hover:text-neon-cyan/80 transition-colors">

@@ -4,6 +4,7 @@ import { db } from '../../../../db'
 import { boardMembers, users, invitations, boards } from '../../../../db/schema'
 import { generateId } from '../../../../utils/id'
 import { sendEmail } from '../../../../utils/mailer'
+import { logBoardEvent } from '../../../../utils/logs'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -54,6 +55,14 @@ export default defineEventHandler(async (event) => {
     email,
     inviterId: (session.user as any).id,
     createdAt: new Date()
+  })
+
+  await logBoardEvent({
+    boardId,
+    type: 'user_action',
+    actor: (session.user as any).name || (session.user as any).email,
+    action: 'member:invited',
+    data: { email }
   })
 
   const board = await db.select().from(boards).where(eq(boards.id, boardId))

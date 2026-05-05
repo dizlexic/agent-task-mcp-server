@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import type { Task } from '../../server/db/schema'
 import type { TaskStatus } from '../composables/useTasks'
-import { COLUMNS } from '../utils/task-constants'
+import { useColumns } from '../composables/useColumns'
 
 import type { Tag } from '../../server/db/schema'
 
 const props = defineProps<{ boardId: string, showArchive: boolean, searchQuery: string, tags: Tag[] }>()
 const { tasks, taskTags, tasksByStatus, moveTask, archiveAllDone, fetchTaskTags } = useTasks(props.boardId)
+const { columns: dynamicColumns, fetchColumns } = useColumns(props.boardId)
 
 onMounted(() => {
   fetchTaskTags()
+  fetchColumns()
 })
 const boardContainer = ref<HTMLElement | null>(null)
 const contextMenu = ref<{ open: (event: MouseEvent, task: Task) => void } | null>(null)
@@ -69,7 +71,8 @@ watch(() => props.showArchive, (newValue) => {
 })
 
 const columns = computed(() => {
-  return props.showArchive ? [...COLUMNS, { title: 'Archive', status: 'archive' }] : COLUMNS
+  const cols = dynamicColumns.value.map(c => ({ title: c.name, status: c.status }))
+  return props.showArchive ? [...cols, { title: 'Archive', status: 'archive' }] : cols
 })
 
 const emit = defineEmits<{ taskClick: [task: Task] }>()

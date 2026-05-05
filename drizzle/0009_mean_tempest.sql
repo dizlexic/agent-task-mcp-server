@@ -1,0 +1,1 @@
+ALTER TABLE `board_columns` ADD `status` enum('backlog','todo','in_progress','review','done','archive') DEFAULT 'backlog' NOT NULL;

@@ -7,5 +7,5 @@ export const iconMap: Record<string, string> = {
 }
 
 export const getIcon = (iconName: string) => {
-  return iconMap[iconName] || iconName
+  return iconMap[iconName.trim()] || iconName
 }

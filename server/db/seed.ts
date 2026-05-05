@@ -1,5 +1,5 @@
 import { db } from './index'
-import { tasks, boards, users } from './schema'
+import { tasks, users, boards, boardColumns } from './schema'
 import { nanoid } from 'nanoid'
 
 const sampleTasks = [
@@ -13,30 +13,45 @@ const sampleTasks = [
 
 async function seed() {
   const now = new Date()
-  console.log('Seeding board and tasks...')
+  console.log('Seeding database...')
+
+  const userId = nanoid(12)
+  const boardId = 'seed-board-id'
 
   await db.insert(users).values({
-    id: 'seed-user-id',
-    email: 'test@example.com',
-    name: 'Test User',
-    passwordHash: 'not-a-real-hash',
+    id: userId,
+    email: 'admin@mootasks.dev',
+    name: 'Admin',
+    passwordHash: 'dummy',
     createdAt: now,
     updatedAt: now,
-  }).catch(() => console.log('User already exists or error inserting user'));
+  })
 
   await db.insert(boards).values({
-    id: 'seed-board-id',
-    name: 'Sample Board',
-    description: 'A board for testing',
-    ownerId: 'seed-user-id',
+    id: boardId,
+    name: 'Seed Board',
+    ownerId: userId,
     createdAt: now,
     updatedAt: now,
-  }).catch(() => console.log('Board already exists or error inserting board'));
+  })
+
+  const columns = ['backlog', 'todo', 'in_progress', 'review', 'done']
+  for (let i = 0; i < columns.length; i++) {
+    await db.insert(boardColumns).values({
+      id: nanoid(12),
+      boardId: boardId,
+      name: columns[i].charAt(0).toUpperCase() + columns[i].slice(1),
+      status: columns[i] as any,
+      order: i,
+      createdAt: now,
+      updatedAt: now,
+    })
+  }
 
   for (const task of sampleTasks) {
     await db.insert(tasks).values({
       id: nanoid(12),
-      boardId: 'seed-board-id',
+      boardId: boardId,
       title: task.title,
       description: task.description,
       status: task.status,

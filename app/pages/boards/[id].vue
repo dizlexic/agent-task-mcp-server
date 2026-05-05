@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { Task } from '../../../server/db/schema'
-import type { Board } from '../../../server/db/schema'
+import type { Task, Board, BoardLog } from '../../../server/db/schema'
 
 const route = useRoute()
 const boardId = route.params.id as string
@@ -12,6 +11,11 @@ const userEmail = computed(() => user.value?.email)
 const board = ref<(Board & { role: string, transfer: any }) | null>(null)
 const { fetchTasks, tasksByStatus, moveTask, createTask, updateTask, deleteTask, startSocket, stopSocket, tasks } = useTasks(boardId)
 const { tags, fetchTags } = useTags(boardId)
+
+const boardLogs = ref<BoardLog[]>([])
+async function fetchBoardLogs() {
+  boardLogs.value = await $fetch<BoardLog[]>(`/api/boards/${boardId}/logs`)
+}
 
 const showCreateForm = ref(false)
 const showDeleteModal = ref(false)
@@ -34,7 +38,7 @@ function toggleSettings() {
     })
   }
 }
-const activeTab = ref<'general' | 'mcp'>('general')
+const activeTab = ref<'general' | 'mcp' | 'logs'>('general')
 const showHelpModal = ref(false)
 const showMcpConfig = ref(false)
 const showAgentsMarkdown = ref(false)
@@ -133,7 +137,7 @@ async function updateBoardInfo() {
   try {
     const updated = await $fetch<Board & { role: string }>(`/api/boards/${boardId}`, {
       method: 'PATCH',
-      body: { 
+      body: {
         name: newName.value.trim(),
         description: newDescription.value.trim()
       }
@@ -227,7 +231,6 @@ onMounted(async () => {
   await loadBoard()
   mcpFunctions.value = await $fetch<string[]>('/api/mcp-functions')
   await fetchTasks()
-  await fetchTags()
 
   const taskId = route.query.taskId || route.query.taskid || route.query.task_id
   if (taskId && typeof taskId === 'string') {
@@ -247,9 +250,9 @@ onMounted(async () => {
   }
 })
 
-watch(viewMode, (newMode) => {
-  if (import.meta.client) {
-    localStorage.setItem('viewMode', newMode)
+watch(activeTab, async (newTab) => {
+  if (newTab === 'logs') {
+    await fetchBoardLogs()
   }
 })
 
@@ -267,6 +270,17 @@ onUnmounted(() => stopSocket())
               type="text"
               placeholder="Search tasks..."
               class="pl-9 pr-4 py-2 text-xs bg-white dark:bg-surface-card border border-gray-200 dark:border-surface-border rounded-xl focus:ring-2 focus:ring-neon-cyan/30 focus:border-neon-cyan/50 transition-all w-48"
+            />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <div class="relative">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search tasks..."
+              class="pl-9 pr-4 py-2 text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-surface-card border border-gray-200 dark:border-surface-border rounded-xl focus:ring-2 focus:ring-neon-cyan/30 focus:border-neon-cyan/50 transition-all w-48"
             />
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -305,7 +319,7 @@ onUnmounted(() => stopSocket())
             </svg>
           </button>
           <button
-            @click="toggleSettings()"
+            @click="showSettings = !showSettings"
             class="p-2.5 text-gray-600 dark:text-gray-300 bg-white dark:bg-surface-card border border-gray-200 dark:border-surface-border rounded-xl hover:bg-gray-50 dark:hover:bg-surface-raised transition-all active:scale-95 shadow-sm"
             :class="{ 'ring-2 ring-neon-cyan/30 border-neon-cyan/50': showSettings }"
             title="Settings"
@@ -400,6 +414,13 @@ onUnmounted(() => stopSocket())
           >
             MCP
           </button>
+          <button
+            @click="activeTab = 'logs'"
+            class="pb-2 text-xs font-bold uppercase tracking-widest transition-colors"
+            :class="activeTab === 'logs' ? 'text-neon-cyan border-b-2 border-neon-cyan' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white'"
+          >
+            Logs
+          </button>
         </div>
 
         <div v-show="activeTab === 'general'" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -455,6 +476,18 @@ onUnmounted(() => stopSocket())
 
           <div class="space-y-6">
             <BoardMembers :board-id="boardId" :is-owner="board.role === 'owner'" />
+          </div>
+        </div>
+
+        <div v-show="activeTab === 'logs'" class="space-y-4">
+          <div v-if="boardLogs.length === 0" class="text-xs text-gray-500 dark:text-gray-400">No logs found.</div>
+          <div v-for="log in boardLogs" :key="log.id" class="text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-surface-dark/50 p-3 rounded-lg border border-gray-100 dark:border-surface-border">
+             <div class="flex gap-2">
+                <span class="font-bold text-neon-cyan">{{ log.type }}</span>
+                <span>{{ log.action }}</span>
+                <span class="ml-auto text-gray-400">{{ new Date(log.createdAt).toLocaleString() }}</span>
+             </div>
+             <div v-if="log.data" class="mt-1 font-mono text-[10px] text-gray-500 overflow-x-auto">{{ JSON.stringify(log.data) }}</div>
           </div>
         </div>
 

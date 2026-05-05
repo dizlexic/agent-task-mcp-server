@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
   return results.map(r => ({
     ...r.board,
     lastVisitedAt: r.lastVisitedAt,
+    lastActivityAt: r.board.lastActivityAt,
     isFavorite: r.isFavorite
   }))
 })
