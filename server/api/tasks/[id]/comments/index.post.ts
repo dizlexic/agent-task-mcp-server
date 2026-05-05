@@ -37,6 +37,7 @@ export default defineEventHandler(async (event) => {
     boardId: task.boardId,
     author: session.user.name || session.user.email,
     content: body.content.trim(),
+    attachment: body.attachment || null,
     createdAt: new Date(),
   }
 

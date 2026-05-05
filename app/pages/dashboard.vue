@@ -1,6 +1,22 @@
 <script setup lang="ts">
-const { boards, invitations, sentInvitations, loading, fetchBoards, fetchInvitations, fetchSentInvitations, acceptInvitation, rejectInvitation, cancelInvitation, createBoard, leaveBoard } = useBoards()
+const { boards, invitations, sentInvitations, loading, fetchBoards, fetchInvitations, fetchSentInvitations, acceptInvitation, rejectInvitation, cancelInvitation, createBoard, leaveBoard, toggleFavorite } = useBoards()
 const { user } = useUserSession()
+
+const currentPage = ref(1)
+const pageSize = 10
+
+const favoriteBoards = computed(() => boards.value.filter(b => b.isFavorite))
+const otherBoards = computed(() => boards.value.filter(b => !b.isFavorite))
+
+const paginatedBoards = computed(() => {
+  const allOtherBoards = [...favoriteBoards.value.slice(6), ...otherBoards.value]
+  const start = (currentPage.value - 1) * pageSize
+  return allOtherBoards.slice(start, start + pageSize)
+})
+const totalPages = computed(() => {
+  const allOtherBoards = [...favoriteBoards.value.slice(6), ...otherBoards.value]
+  return Math.ceil(allOtherBoards.length / pageSize)
+})
 
 const showCreate = ref(false)
 const importInput = ref<HTMLInputElement | null>(null)
@@ -72,6 +88,20 @@ async function onLeave(boardId: string) {
   } catch (e: any) {
     alert(e.data?.message || 'Failed to leave board')
   }
+}
+
+const boardContextMenu = ref<any>(null)
+const editingBoard = ref<any>(null)
+const deletingBoard = ref<any>(null)
+
+function openContextMenu(e: MouseEvent, board: any) {
+  boardContextMenu.value.open(e, board)
+}
+function onEdit(board: any) {
+  editingBoard.value = board
+}
+function onDelete(board: any) {
+  deletingBoard.value = board
 }
 </script>
 
@@ -177,36 +207,82 @@ async function onLeave(boardId: string) {
         </button>
       </div>
 
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <NuxtLink
-          v-for="board in boards"
-          :key="board.id"
-          :to="`/boards/${board.id}`"
-          class="group relative bg-white dark:bg-surface-card rounded-3xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-surface-border p-8 hover:border-neon-cyan/40 dark:hover:border-neon-cyan/30 transition-all hover:-translate-y-1 hover:shadow-2xl dark:hover:shadow-neon-cyan/10 flex flex-col min-h-[220px]"
-        >
-          <div class="mb-4 flex-1">
-            <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight group-hover:text-neon-cyan transition-colors">{{ board.name }}</h3>
-            <p v-if="board.description" class="text-sm font-medium text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed">{{ board.description }}</p>
-          </div>
+      <div v-else class="space-y-12">
+        <div v-if="favoriteBoards.length > 0">
+            <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 ml-1 mb-6">Favorite Boards</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <NuxtLink
+                  v-for="board in favoriteBoards.slice(0, 6)"
+                  :key="board.id"
+                  :to="`/boards/${board.id}`"
+                  class="group relative bg-white dark:bg-surface-card rounded-3xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-surface-border p-8 hover:border-neon-cyan/40 dark:hover:border-neon-cyan/30 transition-all hover:-translate-y-1 hover:shadow-2xl dark:hover:shadow-neon-cyan/10 flex flex-col min-h-[220px]"
+                >
+                  <div v-if="board.lastActivityAt && (!board.lastVisitedAt || new Date(board.lastActivityAt) > new Date(board.lastVisitedAt))" class="absolute top-4 left-4">
+                    <span class="flex h-3 w-3 rounded-full bg-neon-cyan shadow-[0_0_8px_rgba(0,240,255,0.6)] animate-pulse"></span>
+                  </div>
+                  <div class="mb-4 flex-1">
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight group-hover:text-neon-cyan transition-colors">{{ board.name }}</h3>
+                    <p v-if="board.description" class="text-sm font-medium text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed">{{ board.description }}</p>
+                  </div>
 
-          <div class="flex items-center justify-between mt-auto pt-6 border-t border-gray-100 dark:border-surface-border/50">
-            <span class="text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border" :class="board.ownerId === user?.id ? 'bg-neon-cyan/5 text-cyan-600 dark:text-neon-cyan border-neon-cyan/20' : 'bg-gray-100 dark:bg-surface-raised text-gray-400 border-transparent'">
-              {{ board.ownerId === user?.id ? 'Owner' : 'Member' }}
-            </span>
-            <button
-              v-if="board.ownerId !== user?.id"
-              @click.prevent="onLeave(board.id)"
-              class="text-[10px] font-bold uppercase tracking-widest text-red-500 hover:text-red-700 dark:text-neon-red/60 dark:hover:text-neon-red transition-all"
-            >
-              Leave
-            </button>
-            <span v-else class="text-xs opacity-0 group-hover:opacity-100 transition-opacity text-neon-cyan">Open →</span>
-          </div>
-        </NuxtLink>
+                  <div class="flex items-center justify-between mt-auto pt-6 border-t border-gray-100 dark:border-surface-border/50">
+                    <button @click.prevent="toggleFavorite(board.id, !board.isFavorite)" class="text-[10px] font-bold uppercase tracking-widest text-yellow-500 hover:text-yellow-700 transition-all">
+                      {{ board.isFavorite ? '★ Unfavorite' : '☆ Favorite' }}
+                    </button>
+                    <span class="text-xs opacity-0 group-hover:opacity-100 transition-opacity text-neon-cyan">Open →</span>
+                  </div>
+                </NuxtLink>
+            </div>
+        </div>
+
+        <div>
+            <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 ml-1 mb-6">Other Boards</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <NuxtLink
+                  v-for="board in paginatedBoards"
+                  :key="board.id"
+                  :to="`/boards/${board.id}`"
+                  class="group relative bg-white dark:bg-surface-card rounded-3xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-surface-border p-8 hover:border-neon-cyan/40 dark:hover:border-neon-cyan/30 transition-all hover:-translate-y-1 hover:shadow-2xl dark:hover:shadow-neon-cyan/10 flex flex-col min-h-[220px]"
+                >
+                  <div v-if="board.lastActivityAt && (!board.lastVisitedAt || new Date(board.lastActivityAt) > new Date(board.lastVisitedAt))" class="absolute top-4 left-4">
+                    <span class="flex h-3 w-3 rounded-full bg-neon-cyan shadow-[0_0_8px_rgba(0,240,255,0.6)] animate-pulse"></span>
+                  </div>
+                  <div class="mb-4 flex-1">
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight group-hover:text-neon-cyan transition-colors">{{ board.name }}</h3>
+                    <p v-if="board.description" class="text-sm font-medium text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed">{{ board.description }}</p>
+                  </div>
+
+                  <div class="flex items-center justify-between mt-auto pt-6 border-t border-gray-100 dark:border-surface-border/50">
+                    <button @click.prevent="toggleFavorite(board.id, !board.isFavorite)" class="text-[10px] font-bold uppercase tracking-widest text-yellow-500 hover:text-yellow-700 transition-all">
+                      {{ board.isFavorite ? '★ Unfavorite' : '☆ Favorite' }}
+                    </button>
+                    <span class="text-xs opacity-0 group-hover:opacity-100 transition-opacity text-neon-cyan">Open →</span>
+                  </div>
+                </NuxtLink>
+            </div>
+            
+            <div v-if="totalPages > 1" class="flex justify-center mt-8 gap-2">
+                <button 
+                    :disabled="currentPage === 1" 
+                    @click="currentPage--"
+                    class="px-4 py-2 text-xs font-bold uppercase rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                >Prev</button>
+                <span class="px-4 py-2 text-xs font-bold">{{ currentPage }} / {{ totalPages }}</span>
+                <button 
+                    :disabled="currentPage === totalPages" 
+                    @click="currentPage++"
+                    class="px-4 py-2 text-xs font-bold uppercase rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                >Next</button>
+            </div>
+        </div>
       </div>
     </div>
 
     <!-- Create Board Modal -->
+    <BoardContextMenu ref="boardContextMenu" @edit="onEdit" @delete="onDelete" />
+    <EditBoardModal v-if="editingBoard" :board-id="editingBoard.id" :initial-name="editingBoard.name" :initial-description="editingBoard.description || ''" :initial-show-timeline="!!editingBoard.showTimeline" @close="editingBoard = null" @updated="fetchBoards" />
+    <DeleteBoardModal v-if="deletingBoard" :board-id="deletingBoard.id" :board-name="deletingBoard.name" @close="deletingBoard = null" @deleted="fetchBoards" />
+    
     <transition
       enter-active-class="modal-enter-active"
       enter-from-class="modal-enter-from"

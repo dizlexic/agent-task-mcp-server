@@ -18,6 +18,8 @@ export const boards = mysqlTable('boards', {
   mcpToken: text('mcp_token'),
   mcpPublic: boolean('mcp_public').notNull().default(false),
   mcpEnabledFunctions: json('mcp_enabled_functions'),
+  showTimeline: boolean('show_timeline').notNull().default(false),
+  lastActivityAt: timestamp('last_activity_at'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
 })
@@ -26,6 +28,8 @@ export const boardMembers = mysqlTable('board_members', {
   boardId: varchar('board_id', { length: 191 }).notNull().references(() => boards.id, { onDelete: 'cascade' }),
   userId: varchar('user_id', { length: 191 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
   role: mysqlEnum('role', ['owner', 'member']).notNull().default('member'),
+  isFavorite: boolean('is_favorite').notNull().default(false),
+  lastVisitedAt: timestamp('last_visited_at'),
   joinedAt: timestamp('joined_at').notNull(),
 }, (table) => [
   primaryKey({ columns: [table.boardId, table.userId] }),
@@ -42,6 +46,7 @@ export const tasks = mysqlTable('tasks', {
   assignee: varchar('assignee', { length: 255 }),
   parentTaskId: varchar('parent_task_id', { length: 191 }),
   difficulty: int('difficulty'),
+  isHumanOnly: boolean('is_human_only').notNull().default(false),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
 })
@@ -62,6 +67,7 @@ export const comments = mysqlTable('comments', {
   boardId: varchar('board_id', { length: 191 }).notNull().references(() => boards.id, { onDelete: 'cascade' }),
   author: varchar('author', { length: 255 }).notNull(),
   content: text('content').notNull(),
+  attachment: json('attachment'),
   createdAt: timestamp('created_at').notNull(),
 })
 
@@ -88,6 +94,13 @@ export const taskTags = mysqlTable('task_tags', {
   primaryKey({ columns: [table.taskId, table.tagId] }),
 ])
 
+export const taskDependencies = mysqlTable('task_dependencies', {
+  taskId: varchar('task_id', { length: 191 }).notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+  dependencyId: varchar('dependency_id', { length: 191 }).notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+}, (table) => [
+  primaryKey({ columns: [table.taskId, table.dependencyId] }),
+])
+
 export const emailVerificationTokens = mysqlTable('email_verification_tokens', {
   id: varchar('id', { length: 191 }).primaryKey(),
   userId: varchar('user_id', { length: 191 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -112,6 +125,28 @@ export const boardLogs = mysqlTable('board_logs', {
   createdAt: timestamp('created_at').notNull(),
 })
 
+export const boardColumns = mysqlTable('board_columns', {
+  id: varchar('id', { length: 191 }).primaryKey(),
+  boardId: varchar('board_id', { length: 191 }).notNull().references(() => boards.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  instructions: text('instructions'),
+  status: mysqlEnum('status', ['backlog', 'todo', 'in_progress', 'review', 'done', 'archive']).notNull().default('backlog'),
+  order: int('order').notNull().default(0),
+  createdAt: timestamp('created_at').notNull(),
+  updatedAt: timestamp('updated_at').notNull(),
+})
+
+export const boardTransfers = mysqlTable('board_transfers', {
+  id: varchar('id', { length: 191 }).primaryKey(),
+  boardId: varchar('board_id', { length: 191 }).notNull().references(() => boards.id, { onDelete: 'cascade' }),
+  senderId: varchar('sender_id', { length: 191 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  recipientEmail: varchar('recipient_email', { length: 191 }).notNull(),
+  status: mysqlEnum('status', ['pending', 'accepted', 'cancelled']).notNull().default('pending'),
+  createdAt: timestamp('created_at').notNull(),
+  updatedAt: timestamp('updated_at').notNull(),
+})
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Board = typeof boards.$inferSelect
@@ -119,6 +154,10 @@ export type NewBoard = typeof boards.$inferInsert
 export type BoardMember = typeof boardMembers.$inferSelect
 export type Task = typeof tasks.$inferSelect
 export type NewTask = typeof tasks.$inferInsert
+export type BoardColumn = typeof boardColumns.$inferSelect
+export type NewBoardColumn = typeof boardColumns.$inferInsert
+export type BoardTransfer = typeof boardTransfers.$inferSelect
+export type NewBoardTransfer = typeof boardTransfers.$inferInsert
 export type Instruction = typeof instructions.$inferSelect
 export type NewInstruction = typeof instructions.$inferInsert
 export type Comment = typeof comments.$inferSelect
@@ -129,5 +168,7 @@ export type Tag = typeof tags.$inferSelect
 export type NewTag = typeof tags.$inferInsert
 export type TaskTag = typeof taskTags.$inferSelect
 export type NewTaskTag = typeof taskTags.$inferInsert
+export type TaskDependency = typeof taskDependencies.$inferSelect
+export type NewTaskDependency = typeof taskDependencies.$inferInsert
 export type BoardLog = typeof boardLogs.$inferSelect
 export type NewBoardLog = typeof boardLogs.$inferInsert

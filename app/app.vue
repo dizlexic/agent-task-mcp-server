@@ -69,7 +69,10 @@ async function logout() {
           class="flex items-center gap-2 text-xl font-black text-gray-900 dark:text-white hover:text-neon-cyan dark:hover:text-neon-cyan transition-all group min-w-0"
           aria-label="Go to dashboard"
         >
-          <span class="text-2xl group-hover:scale-110 transition-transform shrink-0" aria-hidden="true">🐄</span>
+          <svg v-if="isOnBoard" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 group-hover:scale-110 transition-transform shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <img v-else src="/logo.svg" class="h-8 w-8 group-hover:scale-110 transition-transform shrink-0" alt="Moo Tasks Logo" />
         </NuxtLink>
         <div class="flex flex-col min-w-0">
           <NuxtLink

@@ -4,7 +4,7 @@ import { users } from '../db/schema'
 
 export default defineEventHandler(async (event) => {
   // Only check for API and page requests, skip static assets if they go through h3
-  if (event.path.startsWith('/_nuxt') || event.path.startsWith('/__')) return
+  if (event.path.startsWith('/_nuxt') || event.path.startsWith('/__') || event.path.startsWith('/_ws')) return
 
   const session = await getUserSession(event)
 

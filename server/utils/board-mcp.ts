@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { eq, and, isNull, inArray } from 'drizzle-orm'
 import { db } from '../db'
-import { tasks, comments, instructions, boards } from '../db/schema'
+import { tasks, comments, instructions, boards, boardColumns, users, boardMembers } from '../db/schema'
 import { generateId } from './id'
 import { emitTaskEvent } from './socket'
 import { reorderTasks } from './tasks'
@@ -35,6 +35,9 @@ export const MCP_FUNCTIONS = [
   'board-state',
   'agent-instructions',
   'task-workflow',
+  'generate-changelog',
+  'update-board-column',
+  'list-board-members',
 ] as const
 
 export type McpFunction = typeof MCP_FUNCTIONS[number]
@@ -96,9 +99,10 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         description: z.string().optional().describe('Task description'),
         priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Task priority'),
         parentTaskId: z.string().optional().describe('Parent task ID if this is a correction/follow-up task'),
+        isHumanOnly: z.boolean().optional().describe('Whether the task is human-only (cannot be completed by AI agents)'),
       },
-      async ({ title, description, priority, parentTaskId }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'create-task', data: { title, priority, parentTaskId } })
+      async ({ title, description, priority, parentTaskId, isHumanOnly }) => {
+        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'create-task', data: { title, priority, parentTaskId, isHumanOnly } })
         const now = new Date()
         const newTask = {
           id: generateId(),
@@ -110,6 +114,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
           order: 0,
           assignee: null,
           parentTaskId: parentTaskId?.trim() || null,
+          isHumanOnly: !!isHumanOnly,
           createdAt: now,
           updatedAt: now,
         }
@@ -135,6 +140,10 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         const existing = existingResults[0]
         if (!existing) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
 
+        if (existing.isHumanOnly && status === 'done') {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: 'Cannot mark a human-only task as done' }) }], isError: true }
+        }
+
         await db.update(tasks).set({ status, updatedAt: new Date() }).where(eq(tasks.id, taskId))
         const updatedResults = await db.select().from(tasks).where(eq(tasks.id, taskId))
         const updated = updatedResults[0]
@@ -156,6 +165,10 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         const existingResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
         const existing = existingResults[0]
         if (!existing) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
+
+        if (existing.isHumanOnly) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: 'Cannot submit a human-only task for review' }) }], isError: true }
+        }
 
         await db.update(tasks).set({ status: 'review', updatedAt: new Date() }).where(eq(tasks.id, taskId))
         const updatedResults = await db.select().from(tasks).where(eq(tasks.id, taskId))
@@ -197,6 +210,14 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
           updatedAt: now,
         }
         await db.insert(tasks).values(correctionTask)
+        await db.insert(comments).values({
+          id: generateId(),
+          taskId: correctionTask.id,
+          boardId,
+          author: 'AI Agent',
+          content: `This task is a correction for task ${taskId}.`,
+          createdAt: now,
+        })
         await reorderTasks(boardId, 'todo', correctionTask.id, 0)
         emitTaskEvent(boardId, 'task:created', correctionTask)
 
@@ -225,6 +246,10 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         const existing = existingResults[0]
         if (!existing) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
 
+        if (existing.isHumanOnly) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: 'Cannot accept a human-only task' }) }], isError: true }
+        }
+
         if (existing.assignee && existing.status === 'in_progress') {
           return { content: [{ type: 'text', text: JSON.stringify({ error: `Task is already accepted by ${existing.assignee}` }) }], isError: true }
         }
@@ -234,6 +259,53 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         const updated = updatedResults[0]
         if (updated) emitTaskEvent(boardId, 'task:updated', updated)
         return { content: [{ type: 'text', text: JSON.stringify({ message: `Task accepted by ${agentName}`, task: updated }) }] }
+      },
+    )
+  }
+
+  if (enabledFunctions['update-board-column'] !== false) {
+    server.tool(
+      'update-board-column',
+      'Update a board column\'s name, description, or instructions.',
+      {
+        columnId: z.string().describe('The unique column ID'),
+        name: z.string().optional().describe('New column name'),
+        description: z.string().optional().describe('New column description'),
+        instructions: z.string().optional().describe('New column instructions'),
+      },
+      async ({ columnId, name, description, instructions }) => {
+        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'update-board-column', data: { columnId, name, description, instructions } })
+        
+        const updateData: any = {};
+        if (name !== undefined) updateData.name = name;
+        if (description !== undefined) updateData.description = description;
+        if (instructions !== undefined) updateData.instructions = instructions;
+        
+        await db.update(boardColumns)
+          .set({ ...updateData, updatedAt: new Date() })
+          .where(and(eq(boardColumns.id, columnId), eq(boardColumns.boardId, boardId)));
+          
+        return { content: [{ type: 'text', text: JSON.stringify({ message: 'Column updated' }) }] }
+      },
+    )
+  }
+
+  if (enabledFunctions['list-board-members'] !== false) {
+    server.tool(
+      'list-board-members',
+      'List members of the board. WHEN TO USE: To find users to assign tasks to.',
+      {},
+      async () => {
+        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'list-board-members', data: {} })
+        const members = await db.select({
+          userId: boardMembers.userId,
+          name: users.name,
+          role: boardMembers.role
+        })
+        .from(boardMembers)
+        .leftJoin(users, eq(boardMembers.userId, users.id))
+        .where(eq(boardMembers.boardId, boardId));
+        return { content: [{ type: 'text', text: JSON.stringify({ members }) }] }
       },
     )
   }
@@ -259,6 +331,38 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
           boardId,
           author: author.trim(),
           content: content.trim(),
+          attachment: null,
+          createdAt: new Date(),
+        }
+        await db.insert(comments).values(newComment)
+        return { content: [{ type: 'text', text: JSON.stringify({ message: 'Comment added', comment: newComment }) }] }
+      },
+    )
+
+    server.tool(
+      'add-comment-with-attachment',
+      'Add a comment with an attachment to a task.',
+      {
+        taskId: z.string().describe('The unique task ID'),
+        author: z.string().min(1).describe('Name of the comment author'),
+        content: z.string().min(1).describe('The comment text'),
+        attachmentUrl: z.string().describe('The URL of the attachment'),
+        attachmentType: z.string().describe('The type of the attachment (e.g., image/png)'),
+        attachmentName: z.string().optional().describe('The name of the attachment'),
+      },
+      async ({ taskId, author, content, attachmentUrl, attachmentType, attachmentName }) => {
+        await logBoardEvent({ boardId, type: 'mcp_request', actor: author, action: 'add-comment', data: { taskId } })
+        const taskResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
+        const task = taskResults[0]
+        if (!task) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
+
+        const newComment = {
+          id: generateId(),
+          taskId,
+          boardId,
+          author: author.trim(),
+          content: content.trim(),
+          attachment: { url: attachmentUrl, type: attachmentType, name: attachmentName || null },
           createdAt: new Date(),
         }
         await db.insert(comments).values(newComment)
@@ -349,6 +453,27 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         const content = await getInstructionContent(boardId, 'task_workflow')
         return { messages: [{ role: 'user', content: { type: 'text', text: content } }] }
       },
+    )
+  }
+
+  if (enabledFunctions['generate-changelog'] !== false) {
+    server.tool(
+      'generate-changelog',
+      'Generate a markdown changelog based on completed (done) tasks.',
+      {},
+      async () => {
+        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'generate-changelog', data: {} })
+        const doneTasks = await db.select().from(tasks)
+          .where(and(eq(tasks.boardId, boardId), eq(tasks.status, 'done')))
+          .orderBy(tasks.updatedAt)
+
+        if (doneTasks.length === 0) {
+          return { content: [{ type: 'text', text: 'No completed tasks found.' }] }
+        }
+
+        const markdown = doneTasks.map(t => `- [${t.title}] - ${t.description}`).join('\n')
+        return { content: [{ type: 'text', text: `# Changelog\n\n${markdown}` }] }
+      }
     )
   }
 

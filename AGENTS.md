@@ -72,6 +72,9 @@ toggles in board settings):
 | `request-corrections` | Create a linked correction task off a reviewed task   |
 | `create-task`         | File a new task on the board                          |
 | `delete-task`         | Remove a task (use sparingly)                         |
+| `generate-changelog`  | Generate a markdown changelog based on completed (done) tasks |
+| `update-board-column` | Update a board column's name, description, or instructions    |
+| `list-board-members`  | List members of the board. WHEN TO USE: To find users to assign tasks to. |
 
 Plus resources/prompts:
 
@@ -110,6 +113,8 @@ capacity on this project), follow this loop:
 ### Rules of thumb
 
 - ✅ Always `accept-task` **before** writing code, so humans see who's working.
+- ✅ **Always check for comments** before starting work; they often contain
+  crucial context, constraints, or previous discussions.
 - ✅ One task at a time per agent identity.
 - ✅ If a task is unclear, leave a comment asking for clarification rather than
   guessing — and leave the task in `todo` (don't accept it yet).
@@ -234,7 +239,19 @@ playbook, including snapshot/journal anatomy and review checklist.
 
 ---
 
-## 7. Customizing this file
+## 7. AI Integration (Ollama)
+
+This project supports local AI integration via [Ollama](https://ollama.com).
+
+### Configuration
+Configure the Ollama connection via environment variables:
+
+- `OLLAMA_API_URL` (default: `http://localhost:11434`)
+- `OLLAMA_MODEL` (default: `llama3`)
+
+---
+
+## 8. Customizing this file
 
 The `agent-instructions` resource on the board lets you ship board-specific
 overrides without editing this file. Keep `AGENTS.md` for repo-level
