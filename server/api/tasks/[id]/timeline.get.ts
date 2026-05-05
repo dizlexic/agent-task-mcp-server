@@ -28,7 +28,15 @@ export default defineEventHandler(async (event) => {
   const logs = await db.select().from(boardLogs).where(eq(boardLogs.boardId, task.boardId))
   
   // Filter logs for this task
-  const taskLogs = logs.filter(log => log.data && (log.data as any).taskId === taskId)
+  const taskLogs = logs.filter(log => {
+    if (!log.data) return false
+    try {
+      const data = typeof log.data === 'string' ? JSON.parse(log.data) : log.data
+      return (data as any).taskId === taskId
+    } catch (e) {
+      return false
+    }
+  })
 
   return {
     comments: taskComments,

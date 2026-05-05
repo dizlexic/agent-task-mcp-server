@@ -4,6 +4,11 @@ export const iconMap: Record<string, string> = {
   zap: '⚡',
   star: '⭐',
   bug: '🐛',
+  tag: '🏷️',
+  check: '✅',
+  clock: '⏰',
+  flag: '🚩',
+  rocket: '🚀',
 }
 
 export const getIcon = (iconName: string) => {

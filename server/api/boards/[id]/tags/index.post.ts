@@ -29,5 +29,6 @@ export default defineEventHandler(async (event) => {
 
   await db.insert(tags).values(tag)
 
+  console.log('Tag created:', tag)
   return tag
 })

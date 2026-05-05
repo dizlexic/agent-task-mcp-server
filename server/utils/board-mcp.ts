@@ -166,6 +166,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
     )
   }
 
+  /*
   if (enabledFunctions['request-corrections'] !== false) {
     server.tool(
       'request-corrections',
@@ -210,6 +211,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
       },
     )
   }
+  */
 
   if (enabledFunctions['accept-task'] !== false) {
     server.tool(

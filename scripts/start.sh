@@ -11,8 +11,9 @@ const check = () => {
     client.end();
     process.exit(0);
   });
+  console.log('Attempting to connect to:', process.env.DB_HOST || 'db', 'port:', process.env.DB_PORT || 3306);
   client.on('error', (err) => {
-    console.log('Waiting for database connection (db:3306)... ' + err.message);
+    console.log('Waiting for database connection (' + (process.env.DB_HOST || 'db') + ':' + (process.env.DB_PORT || 3306) + ')... ' + err.message);
     setTimeout(check, 2000);
   });
 };

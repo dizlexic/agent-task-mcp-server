@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Task, Board, BoardLog } from '../../../server/db/schema'
+import type { Task, Board, BoardLog } from '#server/db/schema'
 
 const route = useRoute()
 const boardId = route.params.id as string
@@ -264,17 +264,6 @@ onUnmounted(() => stopSocket())
     <div class="flex-1 flex flex-col w-full max-w-[1600px] mx-auto">
       <Teleport to="#board-actions-teleport">
         <div class="flex items-center gap-3">
-          <div class="relative">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search tasks..."
-              class="pl-9 pr-4 py-2 text-xs bg-white dark:bg-surface-card border border-gray-200 dark:border-surface-border rounded-xl focus:ring-2 focus:ring-neon-cyan/30 focus:border-neon-cyan/50 transition-all w-48"
-            />
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
           <div class="relative">
             <input
               v-model="searchQuery"

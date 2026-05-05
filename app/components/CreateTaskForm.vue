@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { TaskPriority } from '../composables/useTasks'
-import { debounce } from '../utils/debounce'
+import type { TaskPriority } from '~/composables/useTasks'
+import { debounce } from '~/utils/debounce'
 
 const props = defineProps<{ boardId: string }>()
 const emit = defineEmits<{ close: [] }>()
@@ -20,9 +20,17 @@ const modalRef = ref<HTMLElement | null>(null)
 const taskId = ref<string | null>(null)
 const saving = ref(false)
 const saved = ref(false)
-let autosaveInterval: ReturnType<typeof setInterval> | null = null
 
-const debouncedSaveTask = debounce(() => saveTask(), 500)
+const debouncedSaveGeneral = debounce(() => saveTask(), 500)
+const debouncedSaveDescription = debounce(() => saveTask(), 30000)
+
+watch(description, () => {
+  debouncedSaveDescription()
+})
+
+watch([title, priority, difficulty, isHumanOnly], () => {
+  debouncedSaveGeneral()
+})
 
 async function saveTask() {
   if (!title.value.trim()) return
@@ -66,16 +74,10 @@ onMounted(() => {
   document.addEventListener('keydown', onKeydown)
   nextTick(() => modalRef.value?.focus())
   fetchTags()
-
-  // Autosave interval
-  autosaveInterval = setInterval(() => {
-    saveTask()
-  }, 20000)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
-  if (autosaveInterval) clearInterval(autosaveInterval)
 })
 
 async function onSubmit() {
@@ -112,9 +114,12 @@ async function onSubmit() {
     tabindex="-1"
     @click.self="emit('close')"
   >
-    <div class="modal-panel bg-white dark:bg-surface-card rounded-2xl shadow-2xl dark:shadow-[0_0_40px_rgba(0,0,0,0.5)] w-full max-w-2xl border border-gray-200 dark:border-surface-border overflow-hidden">
+    <div class="modal-panel relative bg-white dark:bg-surface-card rounded-2xl shadow-2xl dark:shadow-[0_0_40px_rgba(0,0,0,0.5)] w-full max-w-2xl border border-gray-200 dark:border-surface-border overflow-hidden">
       <div class="p-6 pb-4 border-b border-gray-100 dark:border-surface-border/50 flex items-center justify-between">
         <h2 id="create-task-title" class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Create New Task</h2>
+        <Transition name="fade">
+          <div v-if="saved" class="absolute top-4 right-4 bg-green-500 text-white text-xs font-bold uppercase tracking-widest px-2 py-1 rounded">Saved</div>
+        </Transition>
         <button @click="emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors text-2xl leading-none p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-surface-raised" aria-label="Close dialog">&times;</button>
       </div>
 
@@ -175,7 +180,7 @@ async function onSubmit() {
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 ml-1">Tags</label>
-            <TagPicker :available-tags="tags" v-model:selectedTagIds="selectedTagIds" :board-id="boardId" />
+            <TagPicker v-model:selectedTagIds="selectedTagIds" :board-id="boardId" />
           </div>
 
           <div class="flex justify-end gap-3 pt-4">

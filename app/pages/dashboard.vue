@@ -220,8 +220,8 @@ function onDelete(board: any) {
                   <div v-if="board.lastActivityAt && (!board.lastVisitedAt || new Date(board.lastActivityAt) > new Date(board.lastVisitedAt))" class="absolute top-4 left-4">
                     <span class="flex h-3 w-3 rounded-full bg-neon-cyan shadow-[0_0_8px_rgba(0,240,255,0.6)] animate-pulse"></span>
                   </div>
-                  <div class="mb-4 flex-1">
-                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight group-hover:text-neon-cyan transition-colors">{{ board.name }}</h3>
+                  <div class="mb-4 flex-1 min-w-0">
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight group-hover:text-neon-cyan transition-colors truncate" :title="board.name">{{ board.name }}</h3>
                     <p v-if="board.description" class="text-sm font-medium text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed">{{ board.description }}</p>
                   </div>
 
@@ -247,8 +247,8 @@ function onDelete(board: any) {
                   <div v-if="board.lastActivityAt && (!board.lastVisitedAt || new Date(board.lastActivityAt) > new Date(board.lastVisitedAt))" class="absolute top-4 left-4">
                     <span class="flex h-3 w-3 rounded-full bg-neon-cyan shadow-[0_0_8px_rgba(0,240,255,0.6)] animate-pulse"></span>
                   </div>
-                  <div class="mb-4 flex-1">
-                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight group-hover:text-neon-cyan transition-colors">{{ board.name }}</h3>
+                  <div class="mb-4 flex-1 min-w-0">
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight group-hover:text-neon-cyan transition-colors truncate" :title="board.name">{{ board.name }}</h3>
                     <p v-if="board.description" class="text-sm font-medium text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed">{{ board.description }}</p>
                   </div>
 

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { debounce } from '../utils/debounce'
-import type { Task } from '../../server/db/schema'
-import type { TaskPriority, TaskStatus } from '../composables/useTasks'
+import { debounce } from '~/utils/debounce'
+import type { Task } from '#server/db/schema'
+import type { TaskPriority, TaskStatus } from '~/composables/useTasks'
 
 const props = defineProps<{ task: Task; boardId: string }>()
 const emit = defineEmits<{ close: []; updated: []; openTask: [task: Task] }>()
-const { updateTask, deleteTask, tasks, createTask, taskTags, fetchTaskTags } = useTasks(props.boardId)
+const { updateTask, deleteTask, tasks, createTask, taskTags, fetchTaskTags, addComment } = useTasks(props.boardId)
 const { tags, fetchTags, addTagToTask, removeTagFromTask } = useTags(props.boardId)
 
 const title = ref(props.task.title)
@@ -26,14 +26,26 @@ const selectedTagIds = ref<string[]>(
     .map(tt => tt.tagId)
 )
 const saving = ref(false)
-let autosaveInterval: ReturnType<typeof setInterval> | null = null
-const debouncedSaveTask = debounce((closeModal = false) => saveTask(closeModal), 500)
+
+const debouncedSaveGeneral = debounce((closeModal = false) => saveTask(closeModal), 500)
+const debouncedSaveDescription = debounce((closeModal = false) => saveTask(closeModal), 30000)
 const confirmDelete = ref(false)
 const error = ref('')
 const linkCopied = ref(false)
 const showTimeline = ref(false)
 const modalRef = ref<HTMLElement | null>(null)
 
+watch(description, () => {
+  if (hasChanged.value) {
+    debouncedSaveDescription(false)
+  }
+})
+
+watch([title, priority, difficulty, status, assignee, isHumanOnly], () => {
+  if (hasChanged.value) {
+    debouncedSaveGeneral(false)
+  }
+})
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
@@ -47,11 +59,6 @@ onMounted(() => {
   fetchTags()
   fetchTaskTags()
   fetchMembers()
-  
-  // Autosave interval
-  autosaveInterval = setInterval(() => {
-    saveTask(false)
-  }, 20000)
 })
 
 watch(selectedTagIds, async (newTags, oldTags) => {
@@ -73,7 +80,6 @@ watch(() => taskTags.value, () => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
-  if (autosaveInterval) clearInterval(autosaveInterval)
 })
 
 async function copyTaskLink() {
@@ -103,7 +109,10 @@ const hasChanged = computed(() => {
 
 async function saveTask(closeModal = false) {
   if (!title.value.trim()) return
-  if (!hasChanged.value) return
+  if (!hasChanged.value) {
+    if (closeModal) emit('close')
+    return
+  }
   error.value = ''
   saving.value = true
   try {
@@ -304,7 +313,7 @@ function openParentTask() {
 
               <div class="space-y-1.5 col-span-1 md:col-span-3">
                 <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 ml-1">Tags</label>
-                <TagPicker :available-tags="tags" v-model:selectedTagIds="selectedTagIds" :board-id="boardId" />
+                <TagPicker v-model:selectedTagIds="selectedTagIds" :board-id="boardId" />
               </div>
             </div>
 
@@ -315,14 +324,6 @@ function openParentTask() {
                   <span class="text-neon-orange" aria-hidden="true">↩</span>
                   <h3 class="text-sm font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300">Corrections</h3>
                 </div>
-                <button
-                  v-if="!showCorrectionForm"
-                  type="button"
-                  @click="showCorrectionForm = true"
-                  class="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg border border-neon-orange/30 bg-neon-orange/10 text-orange-600 dark:text-neon-orange hover:bg-neon-orange/20 transition-all shadow-sm shadow-neon-orange/5"
-                >
-                  + Request Change
-                </button>
               </div>
 
               <div v-if="corrections.length > 0" class="grid grid-cols-1 gap-2">
@@ -341,32 +342,6 @@ function openParentTask() {
                     <span class="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate">{{ c.title }}</span>
                   </div>
                   <span class="text-[9px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded bg-gray-100 dark:bg-surface-hover text-gray-500 dark:text-gray-400">{{ c.status }}</span>
-                </div>
-              </div>
-
-              <div v-if="showCorrectionForm" class="bg-white dark:bg-surface-card border border-neon-orange/20 rounded-xl p-4 space-y-4 shadow-xl shadow-neon-orange/5">
-                <div class="space-y-3">
-                  <input v-model="correctionTitle" type="text" class="w-full border border-gray-200 dark:border-surface-border dark:bg-surface-raised dark:text-white rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-neon-orange/30 focus:border-neon-orange/50 outline-none transition-all placeholder:text-gray-400" placeholder="What needs to be fixed?" />
-                  <textarea v-model="correctionDescription" rows="2" class="w-full border border-gray-200 dark:border-surface-border dark:bg-surface-raised dark:text-white rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-neon-orange/30 focus:border-neon-orange/50 outline-none resize-none transition-all placeholder:text-gray-400" placeholder="Describe the corrections needed…" />
-                  <div class="flex items-center justify-between gap-4">
-                     <select v-model="correctionPriority" class="text-xs border border-gray-200 dark:border-surface-border dark:bg-surface-raised dark:text-white rounded-lg px-3 py-1.5 outline-none font-semibold" aria-label="Correction priority">
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="critical">Critical</option>
-                    </select>
-                    <div class="flex gap-2">
-                      <button type="button" @click="showCorrectionForm = false" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">Cancel</button>
-                      <button
-                        type="button"
-                        @click="onCreateCorrection"
-                        :disabled="correctionSubmitting || !correctionTitle.trim()"
-                        class="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-neon-orange text-white dark:text-gray-900 rounded-lg hover:bg-neon-orange/90 disabled:opacity-50 transition-all shadow-md shadow-neon-orange/20"
-                      >
-                        {{ correctionSubmitting ? 'Creating…' : 'Create Task' }}
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>

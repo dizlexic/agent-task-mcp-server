@@ -19,7 +19,6 @@ const toolDescriptions: Record<string, string> = {
   'add-comment': 'Post progress notes / questions on a task',
   'update-task-status': 'Move a task between columns',
   'submit-for-review': 'Mark a task ready for human review',
-  'request-corrections': 'Create a linked correction task off a reviewed task',
   'create-task': 'File a new task on the board',
   'delete-task': 'Remove a task (use sparingly)'
 }

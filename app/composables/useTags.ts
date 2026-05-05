@@ -13,12 +13,19 @@ export function useTags(boardId: string) {
   }
 
   async function addTagToTask(taskId: string, tagId: string) {
-    const newLink = await $fetch(`/api/boards/${boardId}/task-tags`, {
+    const newLink = await $fetch(`/api/boards/${boardId}/tasks/${taskId}/tags`, {
       method: 'POST',
-      body: { taskId, tagId }
+      body: { tagId }
     })
     await fetchTaskTags()
     return newLink
+  }
+
+  async function removeTagFromTask(taskId: string, tagId: string) {
+    await $fetch(`/api/boards/${boardId}/tasks/${taskId}/tags/${tagId}`, {
+      method: 'DELETE'
+    })
+    await fetchTaskTags()
   }
 
   async function createTag(data: { name: string, color: string, icon: string }) {
@@ -30,12 +37,12 @@ export function useTags(boardId: string) {
     return tag
   }
 
-  async function removeTagFromTask(taskId: string, tagId: string) {
-    await $fetch(`/api/boards/${boardId}/task-tags/${taskId}/${tagId}`, {
+  async function deleteTag(tagId: string) {
+    await $fetch(`/api/boards/${boardId}/tags/${tagId}`, {
       method: 'DELETE'
     })
-    await fetchTaskTags()
+    await fetchTags()
   }
 
-  return { tags, taskTags, fetchTags, fetchTaskTags, addTagToTask, removeTagFromTask }
+  return { tags, taskTags, fetchTags, fetchTaskTags, addTagToTask, removeTagFromTask, createTag, deleteTag }
 }
