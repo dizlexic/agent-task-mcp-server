@@ -13,8 +13,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Not a member of this board' })
   }
 
-  return await db.select()
+  const results = await db.select()
     .from(taskTags)
     .innerJoin(tasks, eq(tasks.id, taskTags.taskId))
     .where(eq(tasks.boardId, boardId))
+
+  return results.map(row => row.task_tags)
 })

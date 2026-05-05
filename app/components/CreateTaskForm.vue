@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TaskPriority } from '../composables/useTasks'
-import { debounce } from '../utils/debounce'
+import { throttle } from '../utils/throttle'
 
 const props = defineProps<{ boardId: string }>()
 const emit = defineEmits<{ close: [] }>()
@@ -20,9 +20,11 @@ const modalRef = ref<HTMLElement | null>(null)
 const taskId = ref<string | null>(null)
 const saving = ref(false)
 const saved = ref(false)
-let autosaveInterval: ReturnType<typeof setInterval> | null = null
 
-const debouncedSaveTask = debounce(() => saveTask(), 500)
+const throttledSaveTask = throttle(() => saveTask(), 30000)
+watch([title, description, priority, difficulty, isHumanOnly], () => {
+  throttledSaveTask()
+})
 
 async function saveTask() {
   if (!title.value.trim()) return
@@ -66,16 +68,10 @@ onMounted(() => {
   document.addEventListener('keydown', onKeydown)
   nextTick(() => modalRef.value?.focus())
   fetchTags()
-
-  // Autosave interval
-  autosaveInterval = setInterval(() => {
-    saveTask()
-  }, 20000)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
-  if (autosaveInterval) clearInterval(autosaveInterval)
 })
 
 async function onSubmit() {
@@ -115,12 +111,16 @@ async function onSubmit() {
     <div class="modal-panel bg-white dark:bg-surface-card rounded-2xl shadow-2xl dark:shadow-[0_0_40px_rgba(0,0,0,0.5)] w-full max-w-2xl border border-gray-200 dark:border-surface-border max-h-[90vh] overflow-y-auto">
       <div class="p-6 pb-4 border-b border-gray-100 dark:border-surface-border/50 flex items-center justify-between sticky top-0 bg-white dark:bg-surface-card z-10">
         <h2 id="create-task-title" class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Create New Task</h2>
-        <button @click="emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors text-2xl leading-none p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-surface-raised" aria-label="Close dialog">&times;</button>
+        <div class="flex items-center gap-4">
+          <Transition name="fade">
+            <div v-if="saved" class="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs font-medium rounded-lg px-3 py-1 border border-green-200 dark:border-green-800/50">Saved</div>
+          </Transition>
+          <button @click="emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors text-2xl leading-none p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-surface-raised" aria-label="Close dialog">&times;</button>
+        </div>
       </div>
 
       <div class="p-6 pt-5">
         <div v-if="error" role="alert" class="bg-red-50 dark:bg-neon-red/10 text-red-600 dark:text-neon-red text-sm font-medium rounded-xl px-4 py-3 mb-6 border border-red-200 dark:border-neon-red/20 shadow-sm shadow-neon-red/5">{{ error }}</div>
-        <div v-if="saved" class="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm font-medium rounded-xl px-4 py-3 mb-6 border border-green-200 dark:border-green-800/50 shadow-sm shadow-green-900/5">Saved</div>
 
         <form @submit.prevent="onSubmit" class="space-y-5">
           <div class="space-y-1.5">
@@ -193,3 +193,15 @@ async function onSubmit() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

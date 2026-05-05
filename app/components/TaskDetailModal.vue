@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { debounce } from '../utils/debounce'
+import { throttle } from '../utils/throttle'
 import type { Board, Task } from '../../server/db/schema'
 import type { TaskPriority, TaskStatus } from '../composables/useTasks'
 
@@ -26,8 +26,7 @@ const selectedTagIds = ref<string[]>(
     .map(tt => tt.tagId)
 )
 const saving = ref(false)
-let autosaveInterval: ReturnType<typeof setInterval> | null = null
-const debouncedSaveTask = debounce((closeModal = false) => saveTask(closeModal), 500)
+const throttledSaveTask = throttle((closeModal = false) => saveTask(closeModal), 30000)
 const confirmDelete = ref(false)
 const error = ref('')
 const linkCopied = ref(false)
@@ -53,10 +52,10 @@ onMounted(() => {
   fetchMembers()
   fetchBoardSettings()
 
-  // Autosave interval
-  autosaveInterval = setInterval(() => {
-    saveTask(false)
-  }, 20000)
+// Autosave
+watch([title, description, priority, difficulty, status, assignee, isHumanOnly], () => {
+  throttledSaveTask(false)
+})
 })
 
 watch(selectedTagIds, async (newTags, oldTags) => {
@@ -78,7 +77,6 @@ watch(() => taskTags.value, () => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
-  if (autosaveInterval) clearInterval(autosaveInterval)
 })
 
 async function copyTaskLink() {

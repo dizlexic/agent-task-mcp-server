@@ -26,6 +26,14 @@ const priorityBorder: Record<string, string> = {
   low: 'priority-border-low',
 }
 
+const difficultyColors: Record<number, string> = {
+  1: 'bg-neon-green/10 text-green-600 dark:text-neon-green border border-neon-green/20',
+  2: 'bg-neon-yellow/10 text-yellow-600 dark:text-neon-yellow border border-neon-yellow/20',
+  3: 'bg-neon-orange/10 text-orange-600 dark:text-neon-orange border border-neon-orange/20',
+  4: 'bg-neon-red/10 text-red-600 dark:text-neon-red border border-neon-red/20',
+  5: 'bg-neon-red/20 text-red-700 dark:text-neon-red border border-neon-red/30',
+}
+
 </script>
 
 <template>
@@ -71,7 +79,7 @@ const priorityBorder: Record<string, string> = {
           <span class="opacity-70 text-xs" aria-hidden="true">🤖</span>
           <span class="truncate max-w-[100px]">{{ task.assignee }}</span>
         </div>
-        <span v-if="task.difficulty" class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-neon-purple/10 text-purple-600 dark:text-neon-purple border border-neon-purple/20 uppercase tracking-tight">
+        <span v-if="task.difficulty" class="text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-tight" :class="difficultyColors[task.difficulty] || 'bg-neon-purple/10 text-purple-600 dark:text-neon-purple border border-neon-purple/20'">
           {{ task.difficulty }}
         </span>
       </div>

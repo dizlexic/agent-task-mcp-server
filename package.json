@@ -18,7 +18,9 @@
   "dependencies": {
     "@nuxtjs/mcp-toolkit": "^0.13.4",
     "@tailwindcss/vite": "^4.2.3",
+    "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
+    "markdown-it": "^14.1.1",
     "mysql2": "^3.11.0",
     "nanoid": "^5.1.9",
     "nodemailer": "^8.0.6",
@@ -27,14 +29,14 @@
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "tailwindcss": "^4.2.3",
+    "tsx": "^4.19.3",
     "vue": "^3.5.32",
     "vue-router": "^5.0.4",
     "vuedraggable": "^4.1.0",
-    "zod": "^4.3.6",
-    "drizzle-kit": "^0.31.10",
-    "tsx": "^4.19.3"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
     "@types/nodemailer": "^8.0.0"
   }
 }

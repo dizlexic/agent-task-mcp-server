@@ -103,7 +103,8 @@ capacity on this project), follow this loop:
    following the project's existing conventions, tests, and lint rules.
 6. **Communicate.** Use `add-comment` for non-trivial decisions, blockers,
    or questions. Comments are visible to humans on the board in real time.
-7. **Submit for review.** When done, call `submit-for-review` with the task ID.
+7. **Submit for review.** When done, comment a summary of your changes on the task
+   in markdown, then call `submit-for-review` with the task ID.
    Do **not** mark tasks `done` yourself — humans (or a reviewer agent) move
    tasks from `review` to `done` after verifying.
 8. **Handle corrections.** If a human creates a correction task linked to your

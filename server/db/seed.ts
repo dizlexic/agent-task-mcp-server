@@ -1,5 +1,5 @@
 import { db } from './index'
-import { tasks } from './schema'
+import { tasks, boards, users } from './schema'
 import { nanoid } from 'nanoid'
 
 const sampleTasks = [
@@ -13,14 +13,30 @@ const sampleTasks = [
 
 async function seed() {
   const now = new Date()
-  console.log('Seeding tasks...')
+  console.log('Seeding board and tasks...')
+
+  await db.insert(users).values({
+    id: 'seed-user-id',
+    email: 'test@example.com',
+    name: 'Test User',
+    passwordHash: 'not-a-real-hash',
+    createdAt: now,
+    updatedAt: now,
+  }).catch(() => console.log('User already exists or error inserting user'));
+
+  await db.insert(boards).values({
+    id: 'seed-board-id',
+    name: 'Sample Board',
+    description: 'A board for testing',
+    ownerId: 'seed-user-id',
+    createdAt: now,
+    updatedAt: now,
+  }).catch(() => console.log('Board already exists or error inserting board'));
 
   for (const task of sampleTasks) {
     await db.insert(tasks).values({
       id: nanoid(12),
-      boardId: 'seed-board-id', // Note: This might fail if board doesn't exist, but previously it was used for a board-less task list?
-      // Wait, the original schema had boardId as NOT NULL.
-      // Let's check original seed.ts.
+      boardId: 'seed-board-id',
       title: task.title,
       description: task.description,
       status: task.status,

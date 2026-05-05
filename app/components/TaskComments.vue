@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import type { Comment } from '../../server/db/schema'
+import MarkdownIt from 'markdown-it'
 
 const props = defineProps<{ taskId: string; boardId: string }>()
 const { addComment, fetchComments } = useTasks(props.boardId)
+const md = new MarkdownIt()
 
 const comments = ref<Comment[]>([])
 const newComment = ref('')
 const loading = ref(false)
 const submitting = ref(false)
 const error = ref('')
+const showMarkdown = ref(false)
 
 async function loadComments() {
   loading.value = true
@@ -50,9 +53,14 @@ onMounted(loadComments)
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center gap-2">
-      <span class="text-neon-cyan" aria-hidden="true">💬</span>
-      <h3 class="text-sm font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300">Comments</h3>
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-neon-cyan" aria-hidden="true">💬</span>
+        <h3 class="text-sm font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300">Comments</h3>
+      </div>
+      <button @click="showMarkdown = !showMarkdown" class="text-xs text-gray-500 hover:text-neon-cyan transition-colors">
+        {{ showMarkdown ? 'View Rendered' : 'View Markdown' }}
+      </button>
     </div>
 
     <!-- Comment List -->
@@ -74,7 +82,8 @@ onMounted(loadComments)
               <span class="text-[10px] font-medium text-gray-400 dark:text-gray-600">{{ formatDate(comment.createdAt) }}</span>
             </div>
             <div class="bg-gray-50 dark:bg-surface-raised/40 rounded-2xl rounded-tl-none px-4 py-3 border border-gray-100 dark:border-surface-border/30">
-              <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{{ comment.content }}</p>
+              <p v-if="!showMarkdown" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{{ comment.content }}</p>
+              <div v-else class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed max-w-none" v-html="md.render(comment.content)"></div>
             </div>
           </div>
         </div>
