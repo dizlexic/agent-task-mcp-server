@@ -1,4 +1,4 @@
-import { getRouterParam, createError, defineEventHandler } from 'h3'
+import { getRouterParam, createError, defineEventHandler, readBody } from 'h3'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { eq } from 'drizzle-orm'
 import { db } from '../../../db'
@@ -65,6 +65,16 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    // Pre-read the body via h3 for POST requests. This prevents a race condition
+    // where Nitro/h3 middleware may consume the raw Node.js request stream before
+    // the MCP SDK's @hono/node-server adapter can read it via Readable.toWeb().
+    // The SDK's handleRequest() accepts an optional `parsedBody` parameter for
+    // exactly this scenario (frameworks with body-parser middleware).
+    let parsedBody: unknown
+    if (req.method === 'POST') {
+      parsedBody = await readBody(event)
+    }
+
     // Create a fresh transport and server for each request (stateless mode).
     // The MCP SDK requires a new transport instance per request in stateless mode.
     const mcpServer = await createBoardMcpServer(boardId)
@@ -72,8 +82,9 @@ export default defineEventHandler(async (event) => {
       sessionIdGenerator: undefined, // stateless mode
     })
     await mcpServer.connect(transport)
-    await transport.handleRequest(req, res)
+    await transport.handleRequest(req, res, parsedBody)
   } catch (e: any) {
+    console.error(`[MCP] Error handling ${req.method} for board ${boardId}:`, e)
     if (!res.headersSent) {
       res.writeHead(500, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ error: e.message }))
