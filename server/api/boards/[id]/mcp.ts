@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
 
   // Log connection if it's an SSE start
   if (req.method === 'GET' && accept.includes('text/event-stream')) {
-    await logBoardEvent({
+    void logBoardEvent({
       boardId,
       type: 'agent_connection',
       actor: req.headers['user-agent'] || 'Unknown Agent',

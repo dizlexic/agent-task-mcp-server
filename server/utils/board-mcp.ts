@@ -58,7 +58,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Filter by task priority'),
       },
       async ({ status, priority }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'list-tasks', data: { status, priority } })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'list-tasks', data: { status, priority } })
         const conditions = [
           eq(tasks.boardId, boardId),
           inArray(tasks.status, ['todo', 'in_progress'])
@@ -78,7 +78,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
       'Get full details of a task by ID.',
       { taskId: z.string().describe('The unique task ID') },
       async ({ taskId }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'get-task', data: { taskId } })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'get-task', data: { taskId } })
         const taskResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
         const task = taskResults[0]
         if (!task) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
@@ -98,7 +98,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         parentTaskId: z.string().optional().describe('Parent task ID if this is a correction/follow-up task'),
       },
       async ({ title, description, priority, parentTaskId }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'create-task', data: { title, priority, parentTaskId } })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'create-task', data: { title, priority, parentTaskId } })
         const now = new Date()
         const newTask = {
           id: generateId(),
@@ -130,7 +130,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         status: z.enum(['backlog', 'todo', 'in_progress', 'review', 'done']).describe('New status'),
       },
       async ({ taskId, status }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'update-task-status', data: { taskId, status } })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'update-task-status', data: { taskId, status } })
         const existingResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
         const existing = existingResults[0]
         if (!existing) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
@@ -152,7 +152,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         taskId: z.string().describe('The unique task ID'),
       },
       async ({ taskId }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'submit-for-review', data: { taskId } })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'submit-for-review', data: { taskId } })
         const existingResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
         const existing = existingResults[0]
         if (!existing) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
@@ -178,7 +178,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Priority for the correction task'),
       },
       async ({ taskId, title, description, priority }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'request-corrections', data: { taskId, title } })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'request-corrections', data: { taskId, title } })
         const existingResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
         const existing = existingResults[0]
         if (!existing) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Original task not found' }) }], isError: true }
@@ -222,7 +222,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         agentName: z.string().min(1).describe('Your agent name/identifier'),
       },
       async ({ taskId, agentName }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: agentName, action: 'accept-task', data: { taskId } })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: agentName, action: 'accept-task', data: { taskId } })
         const existingResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
         const existing = existingResults[0]
         if (!existing) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
@@ -250,7 +250,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         content: z.string().min(1).describe('The comment text'),
       },
       async ({ taskId, author, content }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: author, action: 'add-comment', data: { taskId } })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: author, action: 'add-comment', data: { taskId } })
         const taskResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
         const task = taskResults[0]
         if (!task) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
@@ -281,7 +281,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         attachmentName: z.string().optional().describe('The name of the attachment'),
       },
       async ({ taskId, author, content, attachmentUrl, attachmentType, attachmentName }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: author, action: 'add-comment', data: { taskId } })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: author, action: 'add-comment', data: { taskId } })
         const taskResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
         const task = taskResults[0]
         if (!task) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
@@ -309,7 +309,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         taskId: z.string().describe('The unique task ID'),
       },
       async ({ taskId }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'delete-task', data: { taskId } })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'delete-task', data: { taskId } })
         const existingResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
         const existing = existingResults[0]
         if (!existing) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
@@ -330,7 +330,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
         taskId: z.string().describe('The unique task ID'),
       },
       async ({ taskId }) => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'get-comments', data: { taskId } })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'get-comments', data: { taskId } })
         const taskResults = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.boardId, boardId)))
         const task = taskResults[0]
         if (!task) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }], isError: true }
@@ -347,7 +347,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
       `moo-tasks://${boardId}/board-state`,
       { description: 'Full snapshot of this board with all tasks grouped by status.', mimeType: 'application/json' },
       async () => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'resource:board-state', data: {} })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'resource:board-state', data: {} })
         const allTasks = await db.select().from(tasks).where(eq(tasks.boardId, boardId))
         const grouped = {
           backlog: allTasks.filter(t => t.status === 'backlog'),
@@ -367,7 +367,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
       `moo-tasks://${boardId}/agent-instructions`,
       { description: 'Workflow instructions for AI agents interacting with this board.', mimeType: 'text/plain' },
       async () => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'resource:agent-instructions', data: {} })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'resource:agent-instructions', data: {} })
         const content = await getInstructionContent(boardId, 'agent_instructions')
         return { contents: [{ uri: `moo-tasks://${boardId}/agent-instructions`, mimeType: 'text/plain', text: content }] }
       },
@@ -379,7 +379,7 @@ export async function createBoardMcpServer(boardId: string): Promise<McpServer> 
       'task-workflow',
       'Guided workflow for discovering and completing tasks on this board.',
       async () => {
-        await logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'prompt:task-workflow', data: {} })
+        void logBoardEvent({ boardId, type: 'mcp_request', actor: 'AI Agent', action: 'prompt:task-workflow', data: {} })
         const content = await getInstructionContent(boardId, 'task_workflow')
         return { messages: [{ role: 'user', content: { type: 'text', text: content } }] }
       },
