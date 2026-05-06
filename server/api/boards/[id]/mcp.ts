@@ -1,4 +1,4 @@
-import { getRouterParam, createError, defineEventHandler } from 'h3'
+import { getRouterParam, createError, defineEventHandler, readBody } from 'h3'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { eq } from 'drizzle-orm'
 import { db } from '../../../db'
@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
       sessionIdGenerator: undefined, // stateless mode
     })
     await mcpServer.connect(transport)
-    await transport.handleRequest(req, res)
+    await transport.handleRequest(req, res, parsedBody)
   } catch (e: any) {
     if (!res.headersSent) {
       res.writeHead(500, { 'Content-Type': 'application/json' })
